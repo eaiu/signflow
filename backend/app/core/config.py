@@ -12,6 +12,9 @@ class Settings(BaseModel):
     cookiecloud_url: str = ""
     cookiecloud_key: str = ""
     cookiecloud_password: str = ""
+    cookiecloud_timeout: int = 8
+    cookiecloud_verify_ssl: bool = True
+    cookiecloud_send_json: bool = True
     scheduler_enabled: bool = True
 
     class Config:
@@ -34,6 +37,9 @@ class Settings(BaseModel):
             "cookiecloud_url": self.cookiecloud_url,
             "cookiecloud_key": mask(self.cookiecloud_key),
             "cookiecloud_password": mask(self.cookiecloud_password),
+            "cookiecloud_timeout": self.cookiecloud_timeout,
+            "cookiecloud_verify_ssl": self.cookiecloud_verify_ssl,
+            "cookiecloud_send_json": self.cookiecloud_send_json,
             "scheduler_enabled": self.scheduler_enabled,
         }
 
@@ -48,5 +54,8 @@ def get_settings() -> Settings:
         cookiecloud_url=os.getenv("COOKIECLOUD_URL", ""),
         cookiecloud_key=os.getenv("COOKIECLOUD_KEY", ""),
         cookiecloud_password=os.getenv("COOKIECLOUD_PASSWORD", ""),
+        cookiecloud_timeout=int(os.getenv("COOKIECLOUD_TIMEOUT", "8")),
+        cookiecloud_verify_ssl=os.getenv("COOKIECLOUD_VERIFY_SSL", "true").lower() != "false",
+        cookiecloud_send_json=os.getenv("COOKIECLOUD_SEND_JSON", "true").lower() != "false",
         scheduler_enabled=os.getenv("SCHEDULER_ENABLED", "true").lower() != "false",
     )

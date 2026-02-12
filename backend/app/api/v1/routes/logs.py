@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
-from app.db.session import get_session
+from app.db.session import get_session, engine
 from app.db.models import LogEntry
 from app.schemas.logs import LogCreate, LogOut
 import asyncio
@@ -47,12 +47,23 @@ def delete_log(log_id: int, session: Session = Depends(get_session)):
 
 
 @router.get("/stream")
-async def stream_logs(run_id: int | None = None):
+async def stream_logs(run_id: int | None = None, since_id: int | None = None, poll_interval: float = 1.5):
     async def event_generator():
-        last_id = 0
+        last_id = since_id or 0
         while True:
-            await asyncio.sleep(2)
-            # In a real implementation, this would use a DB watch or log queue.
-            payload = {"type": "heartbeat", "last_id": last_id, "run_id": run_id}
-            yield f"data: {json.dumps(payload)}\n\n"
+            await asyncio.sleep(poll_interval)
+            with Session(engine) as session:
+                statement = select(LogEntry).where(LogEntry.id > last_id)
+                if run_id is not None:
+                    statement = statement.where(LogEntry.run_id == run_id)
+                statement = statement.order_by(LogEntry.id)
+                entries = session.exec(statement).all()
+            if entries:
+                for entry in entries:
+                    last_id = entry.id
+                    payload = LogOut.from_orm(entry).dict()
+                    yield f"data: {json.dumps(payload, default=str)}\n\n"
+            else:
+                payload = {"type": "heartbeat", "last_id": last_id, "run_id": run_id}
+                yield f"data: {json.dumps(payload)}\n\n"
     return StreamingResponse(event_generator(), media_type="text/event-stream")

@@ -20,7 +20,7 @@ def start_scheduler(on_tick):
     if _scheduler:
         return _scheduler
     scheduler = BackgroundScheduler()
-    scheduler.add_job(on_tick, IntervalTrigger(seconds=60), id="tick", replace_existing=True)
+    scheduler.add_job(on_tick, IntervalTrigger(seconds=30), id="tick", replace_existing=True)
     scheduler.start()
     _scheduler = scheduler
     return scheduler

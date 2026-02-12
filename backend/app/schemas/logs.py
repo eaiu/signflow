@@ -15,3 +15,6 @@ class LogCreate(LogBase):
 class LogOut(LogBase):
     id: int
     created_at: datetime
+
+    class Config:
+        orm_mode = True

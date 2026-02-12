@@ -3,3 +3,5 @@ uvicorn
 pydantic
 sqlmodel
 apscheduler
+requests
+pycryptodome

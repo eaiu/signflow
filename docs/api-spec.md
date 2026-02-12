@@ -14,6 +14,19 @@ Base URL: `/api/v1`
 { "status": "ok" }
 ```
 
+### List Jobs
+- **GET** `/jobs`
+- **Response** `200 OK`
+```json
+[
+  {
+    "id": "site:1",
+    "name": "site:1",
+    "next_run_time": "2026-02-12T20:10:00Z"
+  }
+]
+```
+
 ### Create Sign-in
 - **POST** `/signins`
 - **Body**
@@ -69,6 +82,24 @@ Base URL: `/api/v1`
 ### Delete Sign-in
 - **DELETE** `/signins/{id}`
 - **Response** `204 No Content`
+
+### Logs (SSE)
+- **GET** `/logs/stream`
+- **Query Params**
+  - `run_id` (optional)
+  - `since_id` (optional)
+  - `poll_interval` (seconds, optional)
+- **Response** `200 OK` (SSE events)
+```json
+{ "id": 12, "run_id": 3, "level": "info", "message": "Run #3 started", "created_at": "2026-02-12T20:10:00Z" }
+```
+
+### CookieCloud Sync
+- **POST** `/cookiecloud/sync?profile=default`
+- **Response** `200 OK`
+```json
+{ "ok": true, "profile": "default", "message": "CookieCloud sync done" }
+```
 
 ## Errors
 Standard JSON errors:

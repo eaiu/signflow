@@ -4,9 +4,9 @@ Minimalist personal sign-in console with FastAPI + SQLite backend and React (Vit
 
 ## Features
 - CRUD for Sites, Runs, Logs
-- CookieCloud sync stub endpoint
+- CookieCloud sync endpoint
 - Masked env configuration endpoint
-- APScheduler heartbeat job (placeholder)
+- APScheduler heartbeat job + site cron mapping
 - SSE log stream endpoint
 - Minimalist modern UI (dashboard, sites, logs, jobs, settings)
 
@@ -58,8 +58,10 @@ Base: `/api/v1`
 - `DELETE /logs/{id}`
 - `GET /logs/stream` (SSE)
 - `GET /config`
+- `GET /jobs`
 - `POST /cookiecloud/sync`
 
 ## Notes
-- Scheduler currently emits heartbeat logs every 60 seconds.
-- CookieCloud sync is a stub; implement HTTP call in `app/services/cookiecloud.py`.
+- Scheduler emits heartbeat logs every 30 seconds and executes queued runs.
+- Add cron schedules by putting `cron: */30 * * * *` inside site notes.
+- CookieCloud sync posts CryptoJS-compatible payload to `/update`.

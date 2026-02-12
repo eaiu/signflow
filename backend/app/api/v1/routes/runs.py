@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from app.db.session import get_session
 from app.db.models import Run
 from app.schemas.runs import RunCreate, RunOut, RunUpdate
+from app.services.executor import QUEUED_STATUS
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ def list_runs(session: Session = Depends(get_session), site_id: int | None = Non
 
 @router.post("/", response_model=RunOut, status_code=201)
 def create_run(payload: RunCreate, session: Session = Depends(get_session)):
-    run = Run(site_id=payload.site_id)
+    run = Run(site_id=payload.site_id, status=QUEUED_STATUS)
     session.add(run)
     session.commit()
     session.refresh(run)
