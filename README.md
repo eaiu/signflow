@@ -3,6 +3,8 @@
 Minimalist personal sign-in console with FastAPI + SQLite backend and React (Vite + Tailwind) frontend.
 
 ## Features
+- Token-protected API (simple API token)
+- Local login page + protected routes
 - CRUD for Sites, Runs, Logs
 - CookieCloud sync endpoint
 - Masked env configuration endpoint
@@ -23,7 +25,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# edit .env as needed
+# edit .env as needed (set API_TOKEN to protect the API)
 uvicorn app.main:app --reload
 ```
 
@@ -33,13 +35,18 @@ uvicorn app.main:app --reload
 cd frontend
 npm install
 cp .env.example .env
-# edit .env as needed
+# edit .env as needed (point API url if needed)
 npm run dev
 ```
 
 ## API Endpoints
 
 Base: `/api/v1`
+
+All endpoints require an API token when `API_TOKEN` is set. Provide it via:
+- `X-API-Token: <token>` header (preferred)
+- `Authorization: Bearer <token>` header
+- `?api_token=<token>` query param (used by SSE)
 
 - `GET /health`
 - `GET /sites`

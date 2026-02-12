@@ -1,21 +1,39 @@
 import { useEffect, useState } from 'react'
 import Layout from '../components/Layout'
 import Card from '../components/Card'
+import LoadingCard from '../components/LoadingCard'
+import ErrorState from '../components/ErrorState'
+import EmptyState from '../components/EmptyState'
 import { apiGet, createLogStream } from '../api/client'
 
 export default function Logs() {
   const [logs, setLogs] = useState([])
   const [streaming, setStreaming] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [streamError, setStreamError] = useState('')
 
   useEffect(() => {
-    apiGet('/logs?limit=50').then(setLogs).catch(console.error)
+    setLoading(true)
+    setError('')
+    setStreamError('')
+    apiGet('/logs?limit=50')
+      .then(setLogs)
+      .catch(err => setError(err?.message || 'Failed to load logs'))
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
     if (!streaming) return
-    const close = createLogStream(null, payload => {
-      setLogs(prev => [...prev, payload])
-    })
+    const close = createLogStream(
+      null,
+      payload => {
+        setLogs(prev => [...prev, payload])
+      },
+      () => {
+        setStreamError('Live stream disconnected')
+      }
+    )
     return () => close()
   }, [streaming])
 
@@ -28,18 +46,30 @@ export default function Logs() {
         {streaming ? 'Pause stream' : 'Resume stream'}
       </button>
     }>
+      {streamError && (
+        <div className="mb-4">
+          <ErrorState title="Stream stopped" description={streamError} />
+        </div>
+      )}
       <Card title="Live Logs" subtitle="Streaming updates from scheduler">
         <div className="space-y-3">
-          {logs.length === 0 && <p className="text-sm text-muted">No log entries yet.</p>}
-          {logs.map(log => (
-            <div key={`${log.id}-${log.created_at}`} className="rounded-lg border border-line p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{log.message}</p>
-                <span className="text-xs text-muted">{log.level}</span>
+          {loading ? (
+            <LoadingCard label="Loading logs" />
+          ) : error ? (
+            <ErrorState title="Failed to load logs" description={error} />
+          ) : logs.length === 0 ? (
+            <EmptyState title="No log entries yet" description="Run a site to see its activity here." />
+          ) : (
+            logs.map(log => (
+              <div key={`${log.id}-${log.created_at}`} className="rounded-lg border border-line p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">{log.message}</p>
+                  <span className="text-xs text-muted">{log.level}</span>
+                </div>
+                <p className="text-xs text-muted">{new Date(log.created_at).toLocaleString()}</p>
               </div>
-              <p className="text-xs text-muted">{new Date(log.created_at).toLocaleString()}</p>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </Card>
     </Layout>

@@ -16,6 +16,7 @@ class Settings(BaseModel):
     cookiecloud_verify_ssl: bool = True
     cookiecloud_send_json: bool = True
     scheduler_enabled: bool = True
+    api_token: str = ""
 
     class Config:
         frozen = True
@@ -41,6 +42,7 @@ class Settings(BaseModel):
             "cookiecloud_verify_ssl": self.cookiecloud_verify_ssl,
             "cookiecloud_send_json": self.cookiecloud_send_json,
             "scheduler_enabled": self.scheduler_enabled,
+            "api_token": mask(self.api_token),
         }
 
 
@@ -58,4 +60,5 @@ def get_settings() -> Settings:
         cookiecloud_verify_ssl=os.getenv("COOKIECLOUD_VERIFY_SSL", "true").lower() != "false",
         cookiecloud_send_json=os.getenv("COOKIECLOUD_SEND_JSON", "true").lower() != "false",
         scheduler_enabled=os.getenv("SCHEDULER_ENABLED", "true").lower() != "false",
+        api_token=os.getenv("API_TOKEN", ""),
     )

@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from app.core.config import get_settings
+from app.core.security import require_api_token
 from app.db.session import init_db, engine
 from app.api.v1.routes.sites import router as sites_router
 from app.api.v1.routes.runs import router as runs_router
@@ -37,14 +38,46 @@ def on_shutdown():
     stop_scheduler()
 
 
-@app.get("/api/v1/health")
+protected_dependencies = [Depends(require_api_token)]
+
+
+@app.get("/api/v1/health", dependencies=protected_dependencies)
 def health():
     return {"status": "ok"}
 
-
-app.include_router(sites_router, prefix=f"{settings.api_v1_prefix}/sites", tags=["sites"])
-app.include_router(runs_router, prefix=f"{settings.api_v1_prefix}/runs", tags=["runs"])
-app.include_router(logs_router, prefix=f"{settings.api_v1_prefix}/logs", tags=["logs"])
-app.include_router(config_router, prefix=f"{settings.api_v1_prefix}/config", tags=["config"])
-app.include_router(jobs_router, prefix=f"{settings.api_v1_prefix}/jobs", tags=["jobs"])
-app.include_router(cookiecloud_router, prefix=f"{settings.api_v1_prefix}/cookiecloud", tags=["cookiecloud"])
+app.include_router(
+    sites_router,
+    prefix=f"{settings.api_v1_prefix}/sites",
+    tags=["sites"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    runs_router,
+    prefix=f"{settings.api_v1_prefix}/runs",
+    tags=["runs"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    logs_router,
+    prefix=f"{settings.api_v1_prefix}/logs",
+    tags=["logs"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    jobs_router,
+    prefix=f"{settings.api_v1_prefix}/jobs",
+    tags=["jobs"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    cookiecloud_router,
+    prefix=f"{settings.api_v1_prefix}/cookiecloud",
+    tags=["cookiecloud"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    config_router,
+    prefix=f"{settings.api_v1_prefix}/config",
+    tags=["config"],
+    dependencies=protected_dependencies,
+)

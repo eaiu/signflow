@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Layout from '../components/Layout'
 import Card from '../components/Card'
+import LoadingCard from '../components/LoadingCard'
+import ErrorState from '../components/ErrorState'
+import EmptyState from '../components/EmptyState'
+import FormError from '../components/FormError'
 import { apiGet, apiPatch, apiPost } from '../api/client'
 
 export default function SiteDetail() {
@@ -10,39 +14,87 @@ export default function SiteDetail() {
   const [runs, setRuns] = useState([])
   const [form, setForm] = useState({ name: '', url: '', enabled: true, cookie_domain: '', cookiecloud_profile: '', notes: '' })
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [formErrors, setFormErrors] = useState({})
 
   useEffect(() => {
     async function load() {
-      const siteData = await apiGet(`/sites/${id}`)
-      const runData = await apiGet(`/runs?site_id=${id}`)
-      setSite(siteData)
-      setRuns(runData)
-      setForm({
-        name: siteData.name,
-        url: siteData.url,
-        enabled: siteData.enabled,
-        cookie_domain: siteData.cookie_domain || '',
-        cookiecloud_profile: siteData.cookiecloud_profile || '',
-        notes: siteData.notes || ''
-      })
+      setLoading(true)
+      setError('')
+      setActionError('')
+      try {
+        const siteData = await apiGet(`/sites/${id}`)
+        const runData = await apiGet(`/runs?site_id=${id}`)
+        setSite(siteData)
+        setRuns(runData)
+        setForm({
+          name: siteData.name,
+          url: siteData.url,
+          enabled: siteData.enabled,
+          cookie_domain: siteData.cookie_domain || '',
+          cookiecloud_profile: siteData.cookiecloud_profile || '',
+          notes: siteData.notes || ''
+        })
+      } catch (err) {
+        setError(err?.message || 'Failed to load site')
+      } finally {
+        setLoading(false)
+      }
     }
-    load().catch(console.error)
+    load()
   }, [id])
+
+  function validateForm(values) {
+    const next = {}
+    if (!values.name.trim()) next.name = 'Name is required'
+    if (!values.url.trim()) next.url = 'URL is required'
+    else if (!/^https?:\/\//i.test(values.url.trim())) next.url = 'URL must start with http(s)://'
+    return next
+  }
 
   async function saveSite(e) {
     e.preventDefault()
+    const nextErrors = validateForm(form)
+    setFormErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
     setSaving(true)
+    setActionError('')
     try {
       const updated = await apiPatch(`/sites/${id}`, form)
       setSite(updated)
+      setFormErrors({})
+    } catch (err) {
+      setActionError(err?.message || 'Failed to save site')
     } finally {
       setSaving(false)
     }
   }
 
   async function triggerRun() {
-    const run = await apiPost('/runs', { site_id: Number(id) })
-    setRuns(prev => [run, ...prev])
+    try {
+      const run = await apiPost('/runs', { site_id: Number(id) })
+      setRuns(prev => [run, ...prev])
+    } catch (err) {
+      setActionError(err?.message || 'Failed to trigger run')
+    }
+  }
+
+  if (loading) {
+    return (
+      <Layout title="Site details">
+        <LoadingCard label="Loading site" />
+      </Layout>
+    )
+  }
+
+  if (error) {
+    return (
+      <Layout title="Site details">
+        <ErrorState title="Site unavailable" description={error} />
+      </Layout>
+    )
   }
 
   if (!site) return null
@@ -51,12 +103,23 @@ export default function SiteDetail() {
     <Layout title={site.name} actions={
       <button onClick={triggerRun} className="rounded-full bg-ink px-4 py-2 text-sm text-white">Run now</button>
     }>
+      {actionError && (
+        <div className="mb-4">
+          <ErrorState title="Action failed" description={actionError} />
+        </div>
+      )}
       <div className="grid gap-6 lg:grid-cols-[1.5fr,1fr]">
         <Card title="Site Details" subtitle="Update configuration">
           <form className="space-y-4" onSubmit={saveSite}>
             <div className="grid gap-3">
-              <input className="w-full rounded-lg border border-line px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-              <input className="w-full rounded-lg border border-line px-3 py-2" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
+              <div className="space-y-2">
+                <input className="w-full rounded-lg border border-line px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <FormError message={formErrors.name} />
+              </div>
+              <div className="space-y-2">
+                <input className="w-full rounded-lg border border-line px-3 py-2" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
+                <FormError message={formErrors.url} />
+              </div>
               <input className="w-full rounded-lg border border-line px-3 py-2" placeholder="Cookie domain" value={form.cookie_domain} onChange={e => setForm({ ...form, cookie_domain: e.target.value })} />
               <input className="w-full rounded-lg border border-line px-3 py-2" placeholder="CookieCloud profile" value={form.cookiecloud_profile} onChange={e => setForm({ ...form, cookiecloud_profile: e.target.value })} />
               <textarea className="min-h-[120px] w-full rounded-lg border border-line px-3 py-2" placeholder="Notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
@@ -71,13 +134,19 @@ export default function SiteDetail() {
 
         <Card title="Recent Runs" subtitle="Last 10 runs">
           <div className="space-y-3">
-            {runs.length === 0 && <p className="text-sm text-muted">No runs yet.</p>}
-            {runs.slice(0, 10).map(run => (
-              <div key={run.id} className="rounded-lg border border-line p-3">
-                <p className="text-sm font-medium">Run #{run.id}</p>
-                <p className="text-xs text-muted">Status: {run.status}</p>
-              </div>
-            ))}
+            {runs.length === 0 ? (
+              <EmptyState
+                title="No runs yet"
+                description="Trigger a run to see it appear here."
+              />
+            ) : (
+              runs.slice(0, 10).map(run => (
+                <div key={run.id} className="rounded-lg border border-line p-3">
+                  <p className="text-sm font-medium">Run #{run.id}</p>
+                  <p className="text-xs text-muted">Status: {run.status}</p>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>
