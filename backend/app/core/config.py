@@ -17,6 +17,7 @@ class Settings(BaseModel):
     cookiecloud_send_json: bool = True
     scheduler_enabled: bool = True
     api_token: str = ""
+    plugin_paths: str = "app.plugins"
 
     class Config:
         frozen = True
@@ -43,6 +44,7 @@ class Settings(BaseModel):
             "cookiecloud_send_json": self.cookiecloud_send_json,
             "scheduler_enabled": self.scheduler_enabled,
             "api_token": mask(self.api_token),
+            "plugin_paths": self.plugin_paths,
         }
 
 
@@ -61,4 +63,5 @@ def get_settings() -> Settings:
         cookiecloud_send_json=os.getenv("COOKIECLOUD_SEND_JSON", "true").lower() != "false",
         scheduler_enabled=os.getenv("SCHEDULER_ENABLED", "true").lower() != "false",
         api_token=os.getenv("API_TOKEN", ""),
+        plugin_paths=os.getenv("PLUGIN_PATHS", "app.plugins"),
     )

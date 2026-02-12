@@ -101,6 +101,34 @@ Base URL: `/api/v1`
 { "ok": true, "profile": "default", "message": "CookieCloud sync done" }
 ```
 
+### Config
+- **GET** `/config`
+- **Response** `200 OK`
+```json
+{
+  "project_name": "SignFlow",
+  "api_v1_prefix": "/api/v1",
+  "environment": "local",
+  "database_url": "sqlite:///./data/signflow.db",
+  "cookiecloud_url": "",
+  "cookiecloud_key": "**",
+  "cookiecloud_password": "**",
+  "cookiecloud_timeout": 8,
+  "cookiecloud_verify_ssl": true,
+  "cookiecloud_send_json": true,
+  "scheduler_enabled": true,
+  "api_token": "**",
+  "plugin_paths": "app.plugins",
+  "plugins": [
+    {
+      "key": "echo",
+      "name": "Echo",
+      "description": "Return a quick echo response for testing."
+    }
+  ]
+}
+```
+
 ## Errors
 Standard JSON errors:
 ```json

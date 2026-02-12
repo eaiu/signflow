@@ -42,6 +42,8 @@ def _enqueue_run(site_id: int):
     from app.db.session import engine
     with Session(engine) as session:
         run = Run(site_id=site_id, status="queued", created_at=datetime.utcnow())
+        if site := session.get(Site, site_id):
+            run.plugin_key = site.plugin_key
         session.add(run)
         session.commit()
         session.refresh(run)

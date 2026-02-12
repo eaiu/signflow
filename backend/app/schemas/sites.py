@@ -9,6 +9,7 @@ class SiteBase(BaseModel):
     enabled: bool = True
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
+    plugin_key: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -22,6 +23,7 @@ class SiteUpdate(BaseModel):
     enabled: Optional[bool] = None
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
+    plugin_key: Optional[str] = None
     notes: Optional[str] = None
 
 

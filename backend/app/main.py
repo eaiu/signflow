@@ -12,6 +12,7 @@ from app.services.scheduler import start_scheduler, stop_scheduler, tick_message
 from app.services.executor import RunExecutor
 from app.services.jobs import register_site_jobs
 from app.services.logs import create_log
+from app.plugins.loader import load_configured_plugins
 from sqlmodel import Session
 
 settings = get_settings()
@@ -22,6 +23,7 @@ app = FastAPI(title=settings.project_name, version="0.3.0")
 @app.on_event("startup")
 def on_startup():
     init_db()
+    load_configured_plugins()
 
     def on_tick():
         with Session(engine) as session:

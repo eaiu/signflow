@@ -9,10 +9,12 @@ class RunBase(BaseModel):
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     error: Optional[str] = None
+    plugin_key: Optional[str] = None
 
 
 class RunCreate(BaseModel):
     site_id: int
+    plugin_key: Optional[str] = None
 
 
 class RunUpdate(BaseModel):
@@ -20,6 +22,7 @@ class RunUpdate(BaseModel):
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     error: Optional[str] = None
+    plugin_key: Optional[str] = None
 
 
 class RunOut(RunBase):

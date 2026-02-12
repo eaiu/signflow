@@ -9,6 +9,7 @@ Minimalist personal sign-in console with FastAPI + SQLite backend and React (Vit
 - CookieCloud sync endpoint
 - Masked env configuration endpoint
 - APScheduler heartbeat job + site cron mapping
+- Site plugin system with hooks
 - SSE log stream endpoint
 - Minimalist modern UI (dashboard, sites, logs, jobs, settings)
 
@@ -71,4 +72,5 @@ All endpoints require an API token when `API_TOKEN` is set. Provide it via:
 ## Notes
 - Scheduler emits heartbeat logs every 30 seconds and executes queued runs.
 - Add cron schedules by putting `cron: */30 * * * *` inside site notes.
+- Set `plugin_key` on a site to select a plugin.
 - CookieCloud sync posts CryptoJS-compatible payload to `/update`.

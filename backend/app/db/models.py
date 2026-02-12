@@ -10,6 +10,7 @@ class Site(SQLModel, table=True):
     enabled: bool = True
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
+    plugin_key: Optional[str] = None
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -22,6 +23,7 @@ class Run(SQLModel, table=True):
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     error: Optional[str] = None
+    plugin_key: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
