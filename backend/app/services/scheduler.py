@@ -1,37 +1,40 @@
-"""Scheduler service."""
+"""Scheduler helpers."""
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from app.core.config import get_settings
 
-settings = get_settings()
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.job import Job
+
 _scheduler: Optional[BackgroundScheduler] = None
+
 
 
 def get_scheduler() -> Optional[BackgroundScheduler]:
     return _scheduler
 
 
-def start_scheduler(on_tick):
+
+def start_scheduler(on_tick) -> Optional[BackgroundScheduler]:
     global _scheduler
-    if not settings.scheduler_enabled:
-        return None
-    if _scheduler:
+    if _scheduler is not None:
         return _scheduler
     scheduler = BackgroundScheduler()
-    scheduler.add_job(on_tick, IntervalTrigger(seconds=30), id="tick", replace_existing=True)
+    scheduler.add_job(on_tick, "interval", seconds=10, id="tick")
     scheduler.start()
     _scheduler = scheduler
     return scheduler
 
 
-def stop_scheduler():
+
+def stop_scheduler() -> None:
     global _scheduler
     if _scheduler:
-        _scheduler.shutdown(wait=False)
+        _scheduler.shutdown()
         _scheduler = None
 
 
+
 def tick_message() -> str:
-    return f"scheduler tick {datetime.utcnow().isoformat()}"
+    return f"Scheduler tick @ {datetime.utcnow().isoformat()}"

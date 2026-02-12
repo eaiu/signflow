@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.plugins.base import SitePlugin, PluginContext, PluginResult
+from app.plugins.base import SitePlugin, PluginContext, PluginResult, PluginConfigField
 from app.plugins.decorators import register_plugin
 
 
@@ -12,6 +12,17 @@ class EchoPlugin(SitePlugin):
     key = "echo"
     name = "Echo"
     description = "Return a quick echo response for testing."
+    version = "1.1"
+    category = "utility"
+    config_schema = [
+        PluginConfigField(
+            key="greeting",
+            label="Greeting",
+            field_type="text",
+            placeholder="Hello",
+            description="Prefix appended to the echo response.",
+        )
+    ]
 
     def run(self, context: PluginContext) -> PluginResult:
         return PluginResult.success(
@@ -27,11 +38,25 @@ class CookieCloudPlugin(SitePlugin):
     key = "cookiecloud-sync"
     name = "CookieCloud Sync"
     description = "Trigger CookieCloud sync when profile is provided."
+    category = "integration"
+    config_schema = [
+        PluginConfigField(
+            key="profile",
+            label="Override profile",
+            field_type="text",
+            placeholder="Profile name",
+            description="Optional CookieCloud profile override.",
+        )
+    ]
 
     def run(self, context: PluginContext) -> PluginResult:
-        if not context.cookiecloud_profile:
+        profile_override = None
+        if context.plugin_config:
+            profile_override = context.plugin_config.get("profile")
+        profile = profile_override or context.cookiecloud_profile
+        if not profile:
             return PluginResult.failure("No CookieCloud profile configured.")
         return PluginResult.success(
-            message=f"CookieCloud sync scheduled for {context.cookiecloud_profile}.",
-            profile=context.cookiecloud_profile,
+            message=f"CookieCloud sync scheduled for {profile}.",
+            profile=profile,
         )

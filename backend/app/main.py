@@ -8,16 +8,17 @@ from app.api.v1.routes.logs import router as logs_router
 from app.api.v1.routes.config import router as config_router
 from app.api.v1.routes.cookiecloud import router as cookiecloud_router
 from app.api.v1.routes.jobs import router as jobs_router
+from app.api.v1.routes.plugins import router as plugins_router
 from app.services.scheduler import start_scheduler, stop_scheduler, tick_message, get_scheduler
 from app.services.executor import RunExecutor
 from app.services.jobs import register_site_jobs
-from app.services.logs import create_log
+from app.services.hooks import log_event
 from app.plugins.loader import load_configured_plugins
 from sqlmodel import Session
 
 settings = get_settings()
 
-app = FastAPI(title=settings.project_name, version="0.3.0")
+app = FastAPI(title=settings.project_name, version="0.4.0")
 
 
 @app.on_event("startup")
@@ -27,7 +28,7 @@ def on_startup():
 
     def on_tick():
         with Session(engine) as session:
-            create_log(session, tick_message(), level="debug")
+            log_event(session, tick_message(), level="debug", event="scheduler.tick")
             register_site_jobs(get_scheduler(), session)
             executor = RunExecutor(session)
             executor.execute_next()
@@ -81,5 +82,11 @@ app.include_router(
     config_router,
     prefix=f"{settings.api_v1_prefix}/config",
     tags=["config"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    plugins_router,
+    prefix=f"{settings.api_v1_prefix}/plugins",
+    tags=["plugins"],
     dependencies=protected_dependencies,
 )

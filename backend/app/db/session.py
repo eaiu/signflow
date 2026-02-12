@@ -1,18 +1,14 @@
-"""Database session and engine."""
 from sqlmodel import SQLModel, create_engine, Session
 from app.core.config import get_settings
+from app.db.models import Site, Run, LogEntry
 
 settings = get_settings()
-
-engine = create_engine(
-    settings.database_url,
-    echo=False,
-    connect_args={"check_same_thread": False} if settings.database_url.startswith("sqlite") else {},
-)
+engine = create_engine(settings.database_url, echo=False)
 
 
-def init_db() -> None:
+def init_db():
     SQLModel.metadata.create_all(engine)
+
 
 
 def get_session():

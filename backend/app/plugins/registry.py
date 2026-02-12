@@ -25,6 +25,12 @@ class PluginRegistry:
     def list(self) -> List[SitePlugin]:
         return list(self.plugins.values())
 
+    def reload(self, paths: Iterable[str]) -> "PluginRegistry":
+        self.plugins = {}
+        for path in paths:
+            _import_all(path)
+        return self
+
 
 _registry: Optional[PluginRegistry] = None
 
@@ -41,6 +47,11 @@ def load_plugins(paths: Iterable[str]) -> PluginRegistry:
     for path in paths:
         _import_all(path)
     return registry
+
+
+def reload_plugins(paths: Iterable[str]) -> PluginRegistry:
+    registry = get_registry()
+    return registry.reload(paths)
 
 
 def _import_all(package_path: str) -> None:

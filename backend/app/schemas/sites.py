@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 from pydantic import BaseModel, AnyHttpUrl
 
 
@@ -10,6 +10,7 @@ class SiteBase(BaseModel):
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
     plugin_key: Optional[str] = None
+    plugin_config: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None
 
 
@@ -24,6 +25,7 @@ class SiteUpdate(BaseModel):
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
     plugin_key: Optional[str] = None
+    plugin_config: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 
 
 @dataclass
@@ -29,8 +29,20 @@ class PluginContext:
     site_url: str
     cookie_domain: Optional[str]
     cookiecloud_profile: Optional[str]
+    plugin_config: Optional[Dict[str, Any]]
     started_at: datetime
     notes: Optional[str]
+
+
+@dataclass
+class PluginConfigField:
+    key: str
+    label: str
+    field_type: str = "text"
+    required: bool = False
+    placeholder: Optional[str] = None
+    description: Optional[str] = None
+    options: List[Dict[str, str]] = field(default_factory=list)
 
 
 class SitePlugin:
@@ -39,6 +51,9 @@ class SitePlugin:
     key: str = "base"
     name: str = "Base Plugin"
     description: str = ""
+    version: str = "1.0"
+    category: str = "general"
+    config_schema: List[PluginConfigField] = []
 
     def before_run(self, context: PluginContext) -> Optional[PluginResult]:
         return None

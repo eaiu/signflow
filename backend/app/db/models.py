@@ -11,6 +11,7 @@ class Site(SQLModel, table=True):
     cookie_domain: Optional[str] = None
     cookiecloud_profile: Optional[str] = None
     plugin_key: Optional[str] = None
+    plugin_config: Optional[str] = Field(default=None, sa_column_kwargs={"nullable": True})
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -24,6 +25,7 @@ class Run(SQLModel, table=True):
     finished_at: Optional[datetime] = None
     error: Optional[str] = None
     plugin_key: Optional[str] = None
+    plugin_config: Optional[str] = Field(default=None, sa_column_kwargs={"nullable": True})
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

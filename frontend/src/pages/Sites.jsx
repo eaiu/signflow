@@ -10,7 +10,8 @@ import { apiGet, apiPost } from '../api/client'
 
 export default function Sites() {
   const [sites, setSites] = useState([])
-  const [form, setForm] = useState({ name: '', url: '', enabled: true })
+  const [plugins, setPlugins] = useState([])
+  const [form, setForm] = useState({ name: '', url: '', enabled: true, plugin_key: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -20,8 +21,11 @@ export default function Sites() {
     setLoading(true)
     setError('')
     setActionError('')
-    apiGet('/sites')
-      .then(setSites)
+    Promise.all([apiGet('/sites'), apiGet('/plugins')])
+      .then(([siteData, pluginData]) => {
+        setSites(siteData)
+        setPlugins(pluginData || [])
+      })
       .catch(err => setError(err?.message || 'Failed to load sites'))
       .finally(() => setLoading(false))
   }, [])
@@ -43,7 +47,7 @@ export default function Sites() {
     try {
       const site = await apiPost('/sites', form)
       setSites(prev => [...prev, site])
-      setForm({ name: '', url: '', enabled: true })
+      setForm({ name: '', url: '', enabled: true, plugin_key: '' })
       setFormErrors({})
     } catch (err) {
       setActionError(err?.message || 'Failed to create site')
@@ -112,6 +116,19 @@ export default function Sites() {
                 required
               />
               <FormError message={formErrors.url} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Plugin</label>
+              <select
+                className="w-full rounded-lg border border-line px-3 py-2"
+                value={form.plugin_key}
+                onChange={e => setForm({ ...form, plugin_key: e.target.value })}
+              >
+                <option value="">No plugin</option>
+                {plugins.map(plugin => (
+                  <option key={plugin.key} value={plugin.key}>{plugin.name}</option>
+                ))}
+              </select>
             </div>
             <label className="flex items-center gap-2 text-sm text-muted">
               <input

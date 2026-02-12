@@ -6,12 +6,12 @@ from typing import Optional
 
 from sqlmodel import Session, select
 
-from app.core.config import get_settings
 from app.db.models import Run, Site
 from app.plugins.base import PluginContext, PluginResult
 from app.plugins.loader import load_configured_plugins
 from app.plugins.registry import get_registry
-from app.services.logs import create_log
+from app.services.hooks import log_event
+from app.services.config_store import deserialize_config
 
 
 QUEUED_STATUS = "queued"
@@ -23,7 +23,6 @@ FAILED_STATUS = "failed"
 class RunExecutor:
     def __init__(self, session: Session):
         self.session = session
-        self.settings = get_settings()
 
     def claim_next_run(self) -> Optional[Run]:
         statement = select(Run).where(Run.status == QUEUED_STATUS).order_by(Run.id)
@@ -43,20 +42,24 @@ class RunExecutor:
             return None
 
         site = self.session.get(Site, run.site_id)
-        create_log(self.session, f"Run #{run.id} started", run_id=run.id)
+        log_event(self.session, f"Run #{run.id} started", run_id=run.id, event="run.started")
         if site:
-            create_log(
+            log_event(
                 self.session,
                 f"Target site: {site.name} ({site.url})",
                 level="debug",
                 run_id=run.id,
+                event="run.target",
+                payload={"site_id": site.id, "site_name": site.name, "site_url": site.url},
             )
             if site.cookiecloud_profile:
-                create_log(
+                log_event(
                     self.session,
                     f"CookieCloud profile: {site.cookiecloud_profile}",
                     level="debug",
                     run_id=run.id,
+                    event="run.cookiecloud",
+                    payload={"profile": site.cookiecloud_profile},
                 )
         try:
             result = self._execute_run(run, site)
@@ -66,7 +69,7 @@ class RunExecutor:
             self.session.add(run)
             self.session.commit()
             self.session.refresh(run)
-            create_log(self.session, f"Run #{run.id} finished", run_id=run.id)
+            log_event(self.session, f"Run #{run.id} finished", run_id=run.id, event="run.finished")
         except Exception as exc:
             run.status = FAILED_STATUS
             run.error = str(exc)
@@ -74,7 +77,14 @@ class RunExecutor:
             self.session.add(run)
             self.session.commit()
             self.session.refresh(run)
-            create_log(self.session, f"Run #{run.id} failed: {exc}", level="error", run_id=run.id)
+            log_event(
+                self.session,
+                f"Run #{run.id} failed: {exc}",
+                level="error",
+                run_id=run.id,
+                event="run.failed",
+                payload={"error": str(exc)},
+            )
         return run
 
     def _execute_run(self, run: Run, site: Optional[Site]) -> PluginResult:
@@ -84,13 +94,16 @@ class RunExecutor:
         if not registry.list():
             load_configured_plugins()
         plugin_key = run.plugin_key or site.plugin_key
+        plugin_config_raw = run.plugin_config or site.plugin_config
         plugin = registry.get(plugin_key)
         if not plugin:
-            create_log(
+            log_event(
                 self.session,
                 f"No plugin configured for site {site.id}.",
                 level="warning",
                 run_id=run.id,
+                event="plugin.missing",
+                payload={"site_id": site.id},
             )
             return PluginResult.failure("No plugin configured")
         context = PluginContext(
@@ -100,19 +113,48 @@ class RunExecutor:
             site_url=site.url,
             cookie_domain=site.cookie_domain,
             cookiecloud_profile=site.cookiecloud_profile,
+            plugin_config=deserialize_config(plugin_config_raw),
             started_at=run.started_at or datetime.utcnow(),
             notes=site.notes,
         )
-        create_log(self.session, f"Plugin {plugin.key} started", level="info", run_id=run.id)
+        log_event(
+            self.session,
+            f"Plugin {plugin.key} started",
+            level="info",
+            run_id=run.id,
+            event="plugin.started",
+            payload={"plugin_key": plugin.key},
+        )
         before_result = plugin.before_run(context)
         if before_result:
-            create_log(self.session, f"Plugin before_run: {before_result.message}", level="debug", run_id=run.id)
+            log_event(
+                self.session,
+                f"Plugin before_run: {before_result.message}",
+                level="debug",
+                run_id=run.id,
+                event="plugin.before",
+                payload={"plugin_key": plugin.key, "ok": before_result.ok},
+            )
             if not before_result.ok:
                 return before_result
         result = plugin.run(context)
-        create_log(self.session, f"Plugin run: {result.message}", level="info" if result.ok else "error", run_id=run.id)
+        log_event(
+            self.session,
+            f"Plugin run: {result.message}",
+            level="info" if result.ok else "error",
+            run_id=run.id,
+            event="plugin.run",
+            payload={"plugin_key": plugin.key, "ok": result.ok},
+        )
         after_result = plugin.after_run(context, result)
         if after_result:
-            create_log(self.session, f"Plugin after_run: {after_result.message}", level="debug", run_id=run.id)
+            log_event(
+                self.session,
+                f"Plugin after_run: {after_result.message}",
+                level="debug",
+                run_id=run.id,
+                event="plugin.after",
+                payload={"plugin_key": plugin.key, "ok": after_result.ok},
+            )
             return after_result
         return result

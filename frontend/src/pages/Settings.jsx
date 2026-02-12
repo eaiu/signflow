@@ -68,10 +68,12 @@ export default function Settings() {
                 <EmptyState title="No config available" description="Set environment variables to see them here." />
               ) : (
                 Object.entries(config).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
-                    <span className="text-muted">{key}</span>
-                    <span className="font-medium">{String(value) || '-'}</span>
-                  </div>
+                  key !== 'plugins' ? (
+                    <div key={key} className="flex items-center justify-between rounded-lg border border-line px-3 py-2">
+                      <span className="text-muted">{key}</span>
+                      <span className="font-medium">{String(value) || '-'}</span>
+                    </div>
+                  ) : null
                 ))
               )}
             </div>
