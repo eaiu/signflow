@@ -1,56 +1,65 @@
-# Personal Sign-in Web App
+# SignFlow
 
-A minimalist personal sign-in web app with an independent frontend and a FastAPI backend backed by SQLite. Built for clarity, speed, and a “Minimalist Modern” design system.
+Minimalist personal sign-in console with FastAPI + SQLite backend and React (Vite + Tailwind) frontend.
 
-## Stack
-- **Frontend:** (framework-agnostic) HTML/CSS/JS scaffold
-- **Backend:** FastAPI (Python)
-- **Database:** SQLite
+## Features
+- CRUD for Sites, Runs, Logs
+- CookieCloud sync stub endpoint
+- Masked env configuration endpoint
+- APScheduler heartbeat job (placeholder)
+- SSE log stream endpoint
+- Minimalist modern UI (dashboard, sites, logs, jobs, settings)
 
-## Structure
+## Project Structure
+- `backend/` FastAPI + SQLModel
+- `frontend/` React + Vite + Tailwind
+- `docs/` notes
+
+## Backend Setup
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# edit .env as needed
+uvicorn app.main:app --reload
 ```
-projects/personal-signin-app/
-├─ backend/
-│  ├─ app/
-│  │  ├─ api/
-│  │  │  └─ v1/
-│  │  │     └─ routes/
-│  │  ├─ core/
-│  │  ├─ db/
-│  │  ├─ schemas/
-│  │  └─ services/
-│  └─ tests/
-├─ frontend/
-│  ├─ public/
-│  └─ src/
-└─ docs/
+
+## Frontend Setup
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# edit .env as needed
+npm run dev
 ```
 
-## Minimalist Modern (Design System Notes)
-- Clean layout, generous whitespace
-- Neutral palette with one strong accent color
-- Simple typography, limited font weights
-- Subtle elevation (shadows) and soft borders
-- Clear focus states, accessible contrast
+## API Endpoints
 
-## Quick Start (local)
-> **Note:** The backend is scaffolded only; no commands are executed by this assistant.
+Base: `/api/v1`
 
-1) Create a Python virtual environment and install dependencies.
-2) Run the FastAPI app with Uvicorn.
-3) Serve the frontend as static files (any lightweight static server).
+- `GET /health`
+- `GET /sites`
+- `POST /sites`
+- `GET /sites/{id}`
+- `PATCH /sites/{id}`
+- `DELETE /sites/{id}`
+- `GET /runs`
+- `POST /runs`
+- `GET /runs/{id}`
+- `PATCH /runs/{id}`
+- `DELETE /runs/{id}`
+- `GET /logs`
+- `POST /logs`
+- `GET /logs/{id}`
+- `DELETE /logs/{id}`
+- `GET /logs/stream` (SSE)
+- `GET /config`
+- `POST /cookiecloud/sync`
 
-## API Spec
-See `docs/api-spec.md`.
-
-## Database Schema
-See `docs/database-schema.sql`.
-
-## Repo Initialization (later)
-If you want to create a Git repo later:
-1) `git init`
-2) `git add .`
-3) `git commit -m "Initial scaffold"`
-4) Create a remote repo (GitHub/GitLab/etc.)
-5) `git remote add origin <REMOTE_URL>`
-6) `git push -u origin main`
+## Notes
+- Scheduler currently emits heartbeat logs every 60 seconds.
+- CookieCloud sync is a stub; implement HTTP call in `app/services/cookiecloud.py`.
