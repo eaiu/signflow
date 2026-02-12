@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 
@@ -16,4 +16,17 @@ class ConfigResponse(BaseModel):
     scheduler_enabled: bool
     api_token: str
     plugin_paths: str
+    admin_token: str
     plugins: List[Dict[str, Any]]
+    ui_settings: Dict[str, Any]
+
+
+class ConfigUpdate(BaseModel):
+    theme: Optional[str] = None
+    timezone: Optional[str] = None
+    notifications: Optional[Dict[str, Any]] = None
+
+
+class ConfigUpdateResponse(BaseModel):
+    ok: bool
+    settings: Dict[str, Any]

@@ -7,7 +7,8 @@ import ErrorState from '../components/ErrorState'
 import EmptyState from '../components/EmptyState'
 import FormError from '../components/FormError'
 import ConfigField from '../components/ConfigField'
-import { apiGet, apiPatch, apiPost } from '../api/client'
+import StatusBanner from '../components/StatusBanner'
+import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client'
 
 export default function SiteDetail() {
   const { id } = useParams()
@@ -20,6 +21,8 @@ export default function SiteDetail() {
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
   const [formErrors, setFormErrors] = useState({})
+  const [adminToken, setAdminToken] = useState('')
+  const [status, setStatus] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -99,6 +102,7 @@ export default function SiteDetail() {
       const updated = await apiPatch(`/sites/${id}`, form)
       setSite(updated)
       setFormErrors({})
+      setStatus('Site saved')
     } catch (err) {
       setActionError(err?.message || 'Failed to save site')
     } finally {
@@ -107,11 +111,33 @@ export default function SiteDetail() {
   }
 
   async function triggerRun() {
+    setActionError('')
     try {
       const run = await apiPost('/runs', { site_id: Number(id) })
       setRuns(prev => [run, ...prev])
+      setStatus('Run queued')
     } catch (err) {
       setActionError(err?.message || 'Failed to trigger run')
+    }
+  }
+
+  async function deleteSite() {
+    if (!adminToken.trim()) {
+      setActionError('Admin token required to delete site')
+      return
+    }
+    setActionError('')
+    try {
+      await apiDelete(`/sites/${id}`, adminToken)
+      setStatus('Site deleted')
+    } catch (err) {
+      if (err?.status === 401) {
+        setActionError('Admin token invalid')
+      } else if (err?.status === 403) {
+        setActionError('Admin token not configured')
+      } else {
+        setActionError(err?.message || 'Failed to delete site')
+      }
     }
   }
 
@@ -140,6 +166,11 @@ export default function SiteDetail() {
       {actionError && (
         <div className="mb-4">
           <ErrorState title="Action failed" description={actionError} />
+        </div>
+      )}
+      {status && (
+        <div className="mb-4">
+          <StatusBanner title="Site" description={status} />
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-[1.5fr,1fr]">
@@ -193,23 +224,39 @@ export default function SiteDetail() {
           </form>
         </Card>
 
-        <Card title="Recent Runs" subtitle="Last 10 runs">
-          <div className="space-y-3">
-            {runs.length === 0 ? (
-              <EmptyState
-                title="No runs yet"
-                description="Trigger a run to see it appear here."
+        <div className="space-y-6">
+          <Card title="Recent Runs" subtitle="Last 10 runs">
+            <div className="space-y-3">
+              {runs.length === 0 ? (
+                <EmptyState
+                  title="No runs yet"
+                  description="Trigger a run to see it appear here."
+                />
+              ) : (
+                runs.slice(0, 10).map(run => (
+                  <div key={run.id} className="rounded-lg border border-line p-3">
+                    <p className="text-sm font-medium">Run #{run.id}</p>
+                    <p className="text-xs text-muted">Status: {run.status}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+
+          <Card title="Danger Zone" subtitle="Destructive actions">
+            <div className="space-y-3 text-sm">
+              <p className="text-muted">Deleting a site removes it permanently.</p>
+              <input
+                className="w-full rounded-lg border border-line px-3 py-2"
+                type="password"
+                placeholder="Admin token"
+                value={adminToken}
+                onChange={e => setAdminToken(e.target.value)}
               />
-            ) : (
-              runs.slice(0, 10).map(run => (
-                <div key={run.id} className="rounded-lg border border-line p-3">
-                  <p className="text-sm font-medium">Run #{run.id}</p>
-                  <p className="text-xs text-muted">Status: {run.status}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
+              <button className="w-full rounded-full bg-rose-600 px-4 py-2 text-sm text-white" onClick={deleteSite} type="button">Delete site</button>
+            </div>
+          </Card>
+        </div>
       </div>
     </Layout>
   )

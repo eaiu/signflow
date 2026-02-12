@@ -5,7 +5,10 @@ import LoadingCard from '../components/LoadingCard'
 import ErrorState from '../components/ErrorState'
 import EmptyState from '../components/EmptyState'
 import StatusBanner from '../components/StatusBanner'
+import FormError from '../components/FormError'
 import { apiGet, apiPost } from '../api/client'
+
+const DEFAULT_CODE = `from app.plugins.base import PluginResult\n\n\ndef run(context):\n    return PluginResult.success(\"Hello from custom plugin\")\n`
 
 function PluginList({ plugins, activeKey, onSelect }) {
   if (plugins.length === 0) {
@@ -88,6 +91,9 @@ export default function Plugins() {
   const [actionError, setActionError] = useState('')
   const [status, setStatus] = useState('')
   const [activeKey, setActiveKey] = useState('')
+  const [editor, setEditor] = useState({ key: '', name: '', description: '', version: '1.0', category: 'custom', run_code: DEFAULT_CODE, config_schema: [], configSchemaRaw: '[]', parseError: '' })
+  const [adminToken, setAdminToken] = useState('')
+  const [formErrors, setFormErrors] = useState({})
 
   useEffect(() => {
     setLoading(true)
@@ -123,6 +129,41 @@ export default function Plugins() {
     }
   }
 
+  function validateEditor() {
+    const next = {}
+    if (!editor.key.trim()) next.key = 'Key is required'
+    if (!editor.name.trim()) next.name = 'Name is required'
+    if (!editor.run_code.trim()) next.run_code = 'Run code is required'
+    if (!Array.isArray(editor.config_schema) || editor.parseError) next.config_schema = 'Config schema must be a JSON array'
+    if (!adminToken.trim()) next.adminToken = 'Admin token required'
+    return next
+  }
+
+  async function savePlugin() {
+    const nextErrors = validateEditor()
+    setFormErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setActionError('')
+    try {
+      const result = await apiPost('/plugins/custom', {
+        key: editor.key.trim(),
+        name: editor.name.trim(),
+        description: editor.description,
+        version: editor.version,
+        category: editor.category,
+        config_schema: editor.config_schema || [],
+        run_code: editor.run_code
+      }, adminToken)
+      setStatus(`Saved ${result.plugin.name}`)
+      setEditor(prev => ({ ...prev, parseError: '' }))
+      const updated = await apiGet('/plugins')
+      setPlugins(updated || [])
+      setActiveKey(result.plugin.key)
+    } catch (err) {
+      setActionError(err?.message || 'Failed to save plugin')
+    }
+  }
+
   return (
     <Layout title="Plugins" actions={
       <button onClick={reloadPlugins} className="rounded-full border border-line px-4 py-2 text-sm">Reload</button>
@@ -149,6 +190,91 @@ export default function Plugins() {
         </Card>
         <Card title="Plugin Details" subtitle="Metadata and schema">
           <PluginDetail plugin={activePlugin} />
+        </Card>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr,1fr]">
+        <Card title="Plugin Editor" subtitle="Create or update custom plugins">
+          <div className="space-y-3">
+            <input
+              className="w-full rounded-lg border border-line px-3 py-2"
+              placeholder="Key (e.g. my-plugin)"
+              value={editor.key}
+              onChange={e => setEditor(prev => ({ ...prev, key: e.target.value }))}
+            />
+            <FormError message={formErrors.key} />
+            <input
+              className="w-full rounded-lg border border-line px-3 py-2"
+              placeholder="Name"
+              value={editor.name}
+              onChange={e => setEditor(prev => ({ ...prev, name: e.target.value }))}
+            />
+            <FormError message={formErrors.name} />
+            <input
+              className="w-full rounded-lg border border-line px-3 py-2"
+              placeholder="Description"
+              value={editor.description}
+              onChange={e => setEditor(prev => ({ ...prev, description: e.target.value }))}
+            />
+            <div className="grid gap-2 md:grid-cols-2">
+              <input
+                className="w-full rounded-lg border border-line px-3 py-2"
+                placeholder="Version"
+                value={editor.version}
+                onChange={e => setEditor(prev => ({ ...prev, version: e.target.value }))}
+              />
+              <input
+                className="w-full rounded-lg border border-line px-3 py-2"
+                placeholder="Category"
+                value={editor.category}
+                onChange={e => setEditor(prev => ({ ...prev, category: e.target.value }))}
+              />
+            </div>
+            <textarea
+              className="min-h-[200px] w-full rounded-lg border border-line px-3 py-2 font-mono text-xs"
+              value={editor.run_code}
+              onChange={e => setEditor(prev => ({ ...prev, run_code: e.target.value }))}
+            />
+            <FormError message={formErrors.run_code} />
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-wide text-muted">Config schema (JSON)</label>
+              <textarea
+                className="min-h-[120px] w-full rounded-lg border border-line px-3 py-2 font-mono text-xs"
+                value={editor.configSchemaRaw || JSON.stringify(editor.config_schema || [], null, 2)}
+                onChange={e => {
+                  const value = e.target.value
+                  try {
+                    const parsed = JSON.parse(value)
+                    setEditor(prev => ({ ...prev, config_schema: parsed, configSchemaRaw: value }))
+                  } catch {
+                    setEditor(prev => ({ ...prev, configSchemaRaw: value }))
+                  }
+                }}
+              />
+              <p className="text-xs text-muted">Provide an array of config field objects.</p>
+              {(editor.parseError || !Array.isArray(editor.config_schema)) && (
+                <p className="text-xs text-rose-600">Invalid JSON array.</p>
+              )}
+            </div>
+            <FormError message={formErrors.config_schema} />
+            <div className="space-y-2">
+              <label className="text-xs uppercase tracking-wide text-muted">Admin token</label>
+              <input
+                className="w-full rounded-lg border border-line px-3 py-2"
+                type="password"
+                value={adminToken}
+                onChange={e => setAdminToken(e.target.value)}
+              />
+              <FormError message={formErrors.adminToken} />
+            </div>
+            <button onClick={savePlugin} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">Save plugin</button>
+          </div>
+        </Card>
+        <Card title="Editor Tips" subtitle="Plugin code signature">
+          <div className="space-y-2 text-sm text-muted">
+            <p>Define a <span className="font-mono">run(context)</span> function. Return <span className="font-mono">PluginResult.success()</span> or <span className="font-mono">PluginResult.failure()</span>.</p>
+            <p>Use <span className="font-mono">context.site_name</span>, <span className="font-mono">context.site_url</span>, <span className="font-mono">context.plugin_config</span>.</p>
+          </div>
         </Card>
       </div>
     </Layout>

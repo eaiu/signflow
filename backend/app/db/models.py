@@ -34,4 +34,6 @@ class LogEntry(SQLModel, table=True):
     run_id: Optional[int] = Field(default=None, foreign_key="run.id")
     level: str = "info"
     message: str
+    event: Optional[str] = None
+    payload: Optional[str] = Field(default=None, sa_column_kwargs={"nullable": True})
     created_at: datetime = Field(default_factory=datetime.utcnow)

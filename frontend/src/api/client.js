@@ -2,8 +2,8 @@ import { clearApiToken, getApiToken } from './auth'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api/v1'
 
-function buildHeaders() {
-  const headers = { 'Content-Type': 'application/json' }
+function buildHeaders(extra = {}) {
+  const headers = { 'Content-Type': 'application/json', ...extra }
   const token = getApiToken()
   if (token) headers['X-API-Token'] = token
   return headers
@@ -37,26 +37,29 @@ export async function apiGet(path) {
   return handleResponse(res)
 }
 
-export async function apiPost(path, payload) {
+export async function apiPost(path, payload, adminToken) {
+  const headers = adminToken ? { 'X-Admin-Token': adminToken } : {}
   const res = await fetch(appendTokenParam(path), {
     method: 'POST',
-    headers: buildHeaders(),
+    headers: buildHeaders(headers),
     body: JSON.stringify(payload)
   })
   return handleResponse(res)
 }
 
-export async function apiPatch(path, payload) {
+export async function apiPatch(path, payload, adminToken) {
+  const headers = adminToken ? { 'X-Admin-Token': adminToken } : {}
   const res = await fetch(appendTokenParam(path), {
     method: 'PATCH',
-    headers: buildHeaders(),
+    headers: buildHeaders(headers),
     body: JSON.stringify(payload)
   })
   return handleResponse(res)
 }
 
-export async function apiDelete(path) {
-  const res = await fetch(appendTokenParam(path), { method: 'DELETE', headers: buildHeaders() })
+export async function apiDelete(path, adminToken) {
+  const headers = adminToken ? { 'X-Admin-Token': adminToken } : {}
+  const res = await fetch(appendTokenParam(path), { method: 'DELETE', headers: buildHeaders(headers) })
   return handleResponse(res)
 }
 

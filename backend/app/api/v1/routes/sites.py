@@ -4,6 +4,7 @@ from app.db.session import get_session
 from app.db.models import Site
 from app.schemas.sites import SiteCreate, SiteOut, SiteUpdate
 from app.services.config_store import serialize_config, deserialize_config
+from app.core.security import require_admin_token
 from datetime import datetime
 
 router = APIRouter()
@@ -57,7 +58,7 @@ def update_site(site_id: int, payload: SiteUpdate, session: Session = Depends(ge
     return _site_out(site)
 
 
-@router.delete("/{site_id}", status_code=204)
+@router.delete("/{site_id}", status_code=204, dependencies=[Depends(require_admin_token)])
 def delete_site(site_id: int, session: Session = Depends(get_session)):
     site = session.get(Site, site_id)
     if not site:

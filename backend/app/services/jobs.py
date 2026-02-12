@@ -28,8 +28,18 @@ def register_site_jobs(scheduler, session: Session) -> List[str]:
         valid_job_ids.add(job_id)
         if job_id in existing:
             continue
-        trigger = CronTrigger.from_crontab(cron_expr)
-        scheduler.add_job(_enqueue_run, trigger, id=job_id, args=[site.id])
+        try:
+            trigger = CronTrigger.from_crontab(cron_expr)
+        except ValueError:
+            log_event(
+                session,
+                f"Invalid cron for site #{site.id}: '{cron_expr}'",
+                level="warning",
+                event="cron.invalid",
+                payload={"site_id": site.id, "cron": cron_expr},
+            )
+            continue
+        scheduler.add_job(enqueue_run, trigger, id=job_id, args=[site.id])
         log_event(
             session,
             f"Scheduled site #{site.id} ({site.name}) with cron '{cron_expr}'",
@@ -44,7 +54,7 @@ def register_site_jobs(scheduler, session: Session) -> List[str]:
     return list(existing)
 
 
-def _enqueue_run(site_id: int):
+def enqueue_run(site_id: int) -> Run:
     from app.db.session import engine
     with Session(engine) as session:
         run = Run(site_id=site_id, status="queued", created_at=datetime.utcnow())
@@ -56,12 +66,13 @@ def _enqueue_run(site_id: int):
         session.refresh(run)
         log_event(
             session,
-            f"Cron enqueued run #{run.id} for site {site_id}",
+            f"Enqueued run #{run.id} for site {site_id}",
             level="info",
             run_id=run.id,
-            event="cron.enqueued",
+            event="run.enqueued",
             payload={"site_id": site_id, "run_id": run.id},
         )
+        return run
 
 
 def _extract_cron(notes: str) -> Optional[str]:
@@ -70,3 +81,15 @@ def _extract_cron(notes: str) -> Optional[str]:
         if line.lower().startswith("cron:"):
             return line.split("cron:", 1)[1].strip()
     return None
+
+
+def validate_cron_expression(expr: str) -> Optional[str]:
+    if not expr:
+        return "Cron expression is required"
+    try:
+        CronTrigger.from_crontab(expr)
+    except ValueError as exc:
+        return str(exc)
+    return None
+
+

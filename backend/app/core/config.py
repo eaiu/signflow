@@ -18,6 +18,7 @@ class Settings(BaseModel):
     scheduler_enabled: bool = True
     api_token: str = ""
     plugin_paths: str = "app.plugins"
+    admin_token: str = ""
 
     class Config:
         frozen = True
@@ -45,6 +46,7 @@ class Settings(BaseModel):
             "scheduler_enabled": self.scheduler_enabled,
             "api_token": mask(self.api_token),
             "plugin_paths": self.plugin_paths,
+            "admin_token": mask(self.admin_token),
         }
 
 
@@ -64,4 +66,5 @@ def get_settings() -> Settings:
         scheduler_enabled=os.getenv("SCHEDULER_ENABLED", "true").lower() != "false",
         api_token=os.getenv("API_TOKEN", ""),
         plugin_paths=os.getenv("PLUGIN_PATHS", "app.plugins"),
+        admin_token=os.getenv("ADMIN_TOKEN", ""),
     )

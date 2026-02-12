@@ -6,6 +6,8 @@ class LogBase(BaseModel):
     run_id: int | None = None
     level: str = "info"
     message: str
+    event: str | None = None
+    payload: dict | None = None
 
 
 class LogCreate(LogBase):

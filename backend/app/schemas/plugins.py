@@ -40,3 +40,18 @@ class PluginReloadResult(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class PluginSaveRequest(BaseModel):
+    key: str
+    name: str
+    description: Optional[str] = ""
+    version: Optional[str] = "1.0"
+    category: Optional[str] = "custom"
+    config_schema: List[PluginConfigField] = []
+    run_code: str
+
+
+class PluginSaveResult(BaseModel):
+    ok: bool
+    plugin: PluginMeta

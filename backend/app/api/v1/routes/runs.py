@@ -5,6 +5,7 @@ from app.db.models import Run
 from app.schemas.runs import RunCreate, RunOut, RunUpdate
 from app.services.executor import QUEUED_STATUS
 from app.services.config_store import serialize_config, deserialize_config
+from app.core.security import require_admin_token
 
 router = APIRouter()
 
@@ -64,7 +65,7 @@ def update_run(run_id: int, payload: RunUpdate, session: Session = Depends(get_s
     return _run_out(run)
 
 
-@router.delete("/{run_id}", status_code=204)
+@router.delete("/{run_id}", status_code=204, dependencies=[Depends(require_admin_token)])
 def delete_run(run_id: int, session: Session = Depends(get_session)):
     run = session.get(Run, run_id)
     if not run:

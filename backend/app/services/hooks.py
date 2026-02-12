@@ -21,7 +21,7 @@ def log_event(
     payload: Optional[Dict[str, Any]] = None,
 ) -> None:
     safe_level = level if level in LEVELS else "info"
-    entry = create_log(session, message, level=safe_level, run_id=run_id)
+    entry = create_log(session, message, level=safe_level, run_id=run_id, event=event, payload=payload)
     notification_service.notify(
         event or f"log.{safe_level}",
         {

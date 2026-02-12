@@ -9,6 +9,7 @@ from app.api.v1.routes.config import router as config_router
 from app.api.v1.routes.cookiecloud import router as cookiecloud_router
 from app.api.v1.routes.jobs import router as jobs_router
 from app.api.v1.routes.plugins import router as plugins_router
+from app.api.v1.routes.notifications import router as notifications_router
 from app.services.scheduler import start_scheduler, stop_scheduler, tick_message, get_scheduler
 from app.services.executor import RunExecutor
 from app.services.jobs import register_site_jobs
@@ -88,5 +89,11 @@ app.include_router(
     plugins_router,
     prefix=f"{settings.api_v1_prefix}/plugins",
     tags=["plugins"],
+    dependencies=protected_dependencies,
+)
+app.include_router(
+    notifications_router,
+    prefix=f"{settings.api_v1_prefix}/notifications",
+    tags=["notifications"],
     dependencies=protected_dependencies,
 )
