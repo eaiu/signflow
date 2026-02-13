@@ -26,6 +26,9 @@ class ConfigUpdate(BaseModel):
     theme: Optional[str] = None
     timezone: Optional[str] = None
     notifications: Optional[Dict[str, Any]] = None
+    cookiecloud_url: Optional[str] = None
+    cookiecloud_uuid: Optional[str] = None
+    cookiecloud_password: Optional[str] = None
 
 
 class ConfigUpdateResponse(BaseModel):

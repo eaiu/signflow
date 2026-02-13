@@ -7,23 +7,25 @@ from typing import Dict, Any, List, Optional
 import requests
 
 from app.core.config import get_settings
+from app.services.settings_store import load_app_settings
 from app.services.crypto import decrypt_cryptojs
 
 
 class CookieCloudClient:
     def __init__(self):
         self.settings = get_settings()
+        self.local = load_app_settings()
 
     def sync(self, uuid: Optional[str] = None) -> Dict[str, Any]:
         """Fetch CookieCloud payload(s), decrypt, and return cookie/localStorage data."""
-        if not self.settings.cookiecloud_url:
+        if not (self.local.get("cookiecloud_url") or self.settings.cookiecloud_url):
             return {"ok": False, "message": "CookieCloud not configured"}
 
         uuid_list = self._uuid_list(uuid)
         if not uuid_list:
             return {"ok": False, "message": "CookieCloud uuid missing"}
 
-        if not self.settings.cookiecloud_password:
+        if not (self.local.get("cookiecloud_password") or self.settings.cookiecloud_password):
             return {"ok": False, "message": "CookieCloud password missing"}
 
         all_payloads = []
@@ -65,7 +67,8 @@ class CookieCloudClient:
         return [item.strip() for item in setting.split(",") if item.strip()]
 
     def _fetch_payload(self, uuid: str) -> Dict[str, Any] | None:
-        url = self.settings.cookiecloud_url.rstrip("/") + f"/get/{uuid}"
+        base = self.local.get("cookiecloud_url") or self.settings.cookiecloud_url
+        url = base.rstrip("/") + f"/get/{uuid}"
         try:
             response = requests.get(
                 url,
@@ -83,8 +86,9 @@ class CookieCloudClient:
     def _decrypt_payload(self, uuid: str, encrypted: str | None) -> str | None:
         if not encrypted:
             return None
+        password = self.local.get("cookiecloud_password") or self.settings.cookiecloud_password
         for use_dash in (True, False):
-            key = self._crypt_key(uuid, self.settings.cookiecloud_password, use_dash)
+            key = self._crypt_key(uuid, password, use_dash)
             try:
                 return decrypt_cryptojs(encrypted, key).decode("utf-8")
             except Exception:

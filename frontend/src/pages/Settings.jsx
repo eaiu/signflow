@@ -12,7 +12,9 @@ import { t } from '../i18n'
 export default function Settings() {
   const [config, setConfig] = useState(null)
   const [syncResult, setSyncResult] = useState(null)
+  const [cookiecloudUrl, setCookiecloudUrl] = useState('')
   const [cookiecloudUuid, setCookiecloudUuid] = useState('')
+  const [cookiecloudPassword, setCookiecloudPassword] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -31,8 +33,14 @@ export default function Settings() {
         if (data?.ui_settings) {
           setUiSettings(data.ui_settings)
         }
+        if (data?.cookiecloud_url) {
+          setCookiecloudUrl(data.cookiecloud_url)
+        }
         if (data?.cookiecloud_uuid) {
           setCookiecloudUuid(data.cookiecloud_uuid)
+        }
+        if (data?.cookiecloud_password) {
+          setCookiecloudPassword(data.cookiecloud_password)
         }
       })
       .catch(err => setError(err?.message || t('settings.loadFailed')))
@@ -41,7 +49,9 @@ export default function Settings() {
 
   function validateProfile() {
     const next = {}
+    if (!cookiecloudUrl.trim()) next.cookiecloudUrl = t('settings.cookiecloudUrlRequired')
     if (!cookiecloudUuid.trim()) next.cookiecloudUuid = t('settings.cookiecloudUuidRequired')
+    if (!cookiecloudPassword.trim()) next.cookiecloudPassword = t('settings.cookiecloudPasswordRequired')
     return next
   }
 
@@ -77,7 +87,7 @@ export default function Settings() {
     setSaveStatus('')
     setActionError('')
     try {
-      const result = await apiPatch('/config', { ...uiSettings, cookiecloud_uuid: cookiecloudUuid || null }, adminToken)
+      const result = await apiPatch('/config', { ...uiSettings, cookiecloud_url: cookiecloudUrl || null, cookiecloud_uuid: cookiecloudUuid || null, cookiecloud_password: cookiecloudPassword || null }, adminToken)
       setUiSettings(result.settings)
       setSaveStatus(t('settings.saved'))
       setFormErrors({})
@@ -196,11 +206,30 @@ export default function Settings() {
               <div className="space-y-2">
                 <input
                   className="w-full rounded-lg border border-line px-3 py-2"
+                  placeholder={t('settings.cookiecloudUrlPlaceholder')}
+                  value={cookiecloudUrl}
+                  onChange={e => setCookiecloudUrl(e.target.value)}
+                />
+                <FormError message={formErrors.cookiecloudUrl} />
+              </div>
+              <div className="space-y-2">
+                <input
+                  className="w-full rounded-lg border border-line px-3 py-2"
                   placeholder={t('settings.cookiecloudUuidPlaceholder')}
                   value={cookiecloudUuid}
                   onChange={e => setCookiecloudUuid(e.target.value)}
                 />
                 <FormError message={formErrors.cookiecloudUuid} />
+              </div>
+              <div className="space-y-2">
+                <input
+                  className="w-full rounded-lg border border-line px-3 py-2"
+                  type="password"
+                  placeholder={t('settings.cookiecloudPasswordPlaceholder')}
+                  value={cookiecloudPassword}
+                  onChange={e => setCookiecloudPassword(e.target.value)}
+                />
+                <FormError message={formErrors.cookiecloudPassword} />
               </div>
               <button onClick={syncCookieCloud} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">{t('settings.syncCookies')}</button>
               {syncResult && (
