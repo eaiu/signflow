@@ -12,7 +12,14 @@ router = APIRouter()
 
 
 def _log_out(entry: LogEntry) -> dict:
-    data = LogOut.from_orm(entry).dict()
+    data = {
+        "id": entry.id,
+        "run_id": entry.run_id,
+        "level": entry.level,
+        "message": entry.message,
+        "payload": None,
+        "created_at": entry.created_at,
+    }
     if entry.payload:
         try:
             data["payload"] = json.loads(entry.payload)

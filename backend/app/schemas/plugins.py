@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class PluginConfigField(BaseModel):
@@ -27,11 +27,8 @@ class PluginMeta(BaseModel):
         orm_mode = True
 
 
-class PluginList(BaseModel):
-    __root__: List[PluginMeta]
-
-    class Config:
-        orm_mode = True
+class PluginList(RootModel[List[PluginMeta]]):
+    pass
 
 
 class PluginReloadResult(BaseModel):

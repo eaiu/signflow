@@ -25,6 +25,8 @@ def list_sites(session: Session = Depends(get_session)):
 @router.post("/", response_model=SiteOut, status_code=201)
 def create_site(payload: SiteCreate, session: Session = Depends(get_session)):
     data = payload.dict()
+    if data.get("url") is not None:
+        data["url"] = str(data["url"])
     data["plugin_config"] = serialize_config(data.get("plugin_config"))
     site = Site(**data)
     session.add(site)
