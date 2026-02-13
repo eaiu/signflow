@@ -1,4 +1,5 @@
 import FormError from './FormError'
+import { t } from '../i18n'
 
 export default function ConfigField({ field, value, onChange, error }) {
   const id = `plugin-config-${field.key}`
@@ -13,7 +14,7 @@ export default function ConfigField({ field, value, onChange, error }) {
           value={value || ''}
           onChange={e => onChange(field.key, e.target.value)}
         >
-          <option value="">Select…</option>
+          <option value="">{t('common.selectPlaceholder')}</option>
           {(field.options || []).map(option => (
             <option key={option.value} value={option.value}>{option.label}</option>
           ))}

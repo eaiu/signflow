@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './pages/Dashboard'
 import Sites from './pages/Sites'
@@ -11,66 +11,64 @@ import Plugins from './pages/Plugins'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/sites"
-          element={
-            <ProtectedRoute>
-              <Sites />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/sites/:id"
-          element={
-            <ProtectedRoute>
-              <SiteDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs"
-          element={
-            <ProtectedRoute>
-              <Jobs />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/logs"
-          element={
-            <ProtectedRoute>
-              <Logs />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/plugins"
-          element={
-            <ProtectedRoute>
-              <Plugins />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sites"
+        element={
+          <ProtectedRoute>
+            <Sites />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sites/:id"
+        element={
+          <ProtectedRoute>
+            <SiteDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/jobs"
+        element={
+          <ProtectedRoute>
+            <Jobs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/logs"
+        element={
+          <ProtectedRoute>
+            <Logs />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/plugins"
+        element={
+          <ProtectedRoute>
+            <Plugins />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   )
 }

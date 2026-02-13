@@ -1,4 +1,6 @@
-export default function StatusBanner({ title, description, action, tone = 'info' }) {
+import { t } from '../i18n'
+
+export default function StatusBanner({ title = t('errors.somethingWrong'), description, action, tone = 'info' }) {
   const tones = {
     info: 'border-slate-200 bg-slate-50 text-slate-700',
     error: 'border-rose-200 bg-rose-50 text-rose-700',

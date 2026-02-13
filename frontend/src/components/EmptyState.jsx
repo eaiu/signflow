@@ -1,4 +1,6 @@
-export default function EmptyState({ title, description, action }) {
+import { t } from '../i18n'
+
+export default function EmptyState({ title = t('common.none'), description, action }) {
   return (
     <div className="rounded-lg border border-dashed border-line p-6 text-center">
       <p className="text-sm font-medium">{title}</p>

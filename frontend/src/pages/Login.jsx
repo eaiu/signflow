@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { apiGet } from '../api/client'
 import { getApiToken, setApiToken } from '../api/auth'
 import StatusBanner from '../components/StatusBanner'
+import { t } from '../i18n'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -19,7 +20,7 @@ export default function Login() {
         .then(() => navigate(destination))
         .catch(() => {
           setStatus('error')
-          setMessage('Existing token invalid. Please sign in again.')
+          setMessage(t('auth.existingTokenInvalid'))
           setApiToken('')
           setToken('')
         })
@@ -30,7 +31,7 @@ export default function Login() {
     e.preventDefault()
     if (!token.trim()) {
       setStatus('error')
-      setMessage('Token is required')
+      setMessage(t('auth.tokenRequired'))
       return
     }
     setStatus('checking')
@@ -41,7 +42,7 @@ export default function Login() {
       navigate(destination)
     } catch (err) {
       setStatus('error')
-      setMessage(err?.message || 'Invalid token')
+      setMessage(err?.message || t('auth.invalidToken'))
       setApiToken('')
       setToken('')
     }
@@ -52,25 +53,25 @@ export default function Login() {
       <div className="mx-auto flex min-h-screen max-w-md items-center px-6">
         <div className="w-full space-y-6 rounded-2xl border border-line bg-white p-8 shadow-sm">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted">SignFlow</p>
-            <h1 className="text-2xl font-semibold">Welcome back</h1>
-            <p className="mt-2 text-sm text-muted">Enter your API token to access the console.</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted">{t('app.brand')}</p>
+            <h1 className="text-2xl font-semibold">{t('auth.welcome')}</h1>
+            <p className="mt-2 text-sm text-muted">{t('auth.subtitle')}</p>
           </div>
 
           {status === 'checking' && (
-            <StatusBanner title="Verifying token" description="Checking access..." />
+            <StatusBanner title={t('auth.verifying')} description={t('auth.checking')} />
           )}
           {status === 'error' && (
-            <StatusBanner title="Auth failed" description={message} tone="error" />
+            <StatusBanner title={t('auth.failed')} description={message} tone="error" />
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-xs uppercase tracking-wide text-muted">API token</label>
+              <label className="text-xs uppercase tracking-wide text-muted">{t('auth.tokenLabel')}</label>
               <input
                 className="w-full rounded-lg border border-line px-3 py-2"
                 type="password"
-                placeholder="Paste token"
+                placeholder={t('auth.tokenPlaceholder')}
                 value={token}
                 onChange={e => setToken(e.target.value)}
                 required
@@ -80,11 +81,11 @@ export default function Login() {
               className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white"
               disabled={status === 'checking'}
             >
-              {status === 'checking' ? 'Verifying...' : 'Sign in'}
+              {status === 'checking' ? t('auth.verifyingButton') : t('auth.signIn')}
             </button>
           </form>
 
-          <p className="text-xs text-muted">Token stored locally in your browser.</p>
+          <p className="text-xs text-muted">{t('auth.tokenStored')}</p>
         </div>
       </div>
     </div>

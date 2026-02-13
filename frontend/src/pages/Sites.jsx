@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState'
 import FormError from '../components/FormError'
 import StatusBanner from '../components/StatusBanner'
 import { apiDelete, apiGet, apiPost } from '../api/client'
+import { t } from '../i18n'
 
 export default function Sites() {
   const [sites, setSites] = useState([])
@@ -29,15 +30,15 @@ export default function Sites() {
         setSites(siteData)
         setPlugins(pluginData || [])
       })
-      .catch(err => setError(err?.message || 'Failed to load sites'))
+      .catch(err => setError(err?.message || t('sites.loadFailed')))
       .finally(() => setLoading(false))
   }, [])
 
   function validateForm(values) {
     const next = {}
-    if (!values.name.trim()) next.name = 'Name is required'
-    if (!values.url.trim()) next.url = 'URL is required'
-    else if (!/^https?:\/\//i.test(values.url.trim())) next.url = 'URL must start with http(s)://'
+    if (!values.name.trim()) next.name = t('sites.nameRequired')
+    if (!values.url.trim()) next.url = t('sites.urlRequired')
+    else if (!/^https?:\/\//i.test(values.url.trim())) next.url = t('sites.urlInvalid')
     return next
   }
 
@@ -52,15 +53,15 @@ export default function Sites() {
       setSites(prev => [...prev, site])
       setForm({ name: '', url: '', enabled: true, plugin_key: '' })
       setFormErrors({})
-      setStatus('Site created')
+      setStatus(t('sites.created'))
     } catch (err) {
-      setActionError(err?.message || 'Failed to create site')
+      setActionError(err?.message || t('sites.createFailed'))
     }
   }
 
   async function handleDelete(siteId) {
     if (!adminToken.trim()) {
-      setActionError('Admin token required to delete a site')
+      setActionError(t('sites.deleteTokenRequired'))
       return
     }
     setActionError('')
@@ -68,44 +69,44 @@ export default function Sites() {
     try {
       await apiDelete(`/sites/${siteId}`, adminToken)
       setSites(prev => prev.filter(site => site.id !== siteId))
-      setStatus('Site deleted')
+      setStatus(t('sites.deleted'))
     } catch (err) {
       if (err?.status === 401) {
-        setActionError('Admin token invalid')
+        setActionError(t('sites.adminTokenInvalid'))
       } else if (err?.status === 403) {
-        setActionError('Admin token not configured')
+        setActionError(t('sites.adminTokenNotConfigured'))
       } else {
-        setActionError(err?.message || 'Failed to delete site')
+        setActionError(err?.message || t('sites.deleteFailed'))
       }
     }
   }
 
   return (
-    <Layout title="Sites" actions={
-      <button className="rounded-full bg-ink px-4 py-2 text-sm text-white">Add site</button>
+    <Layout title={t('sites.title')} actions={
+      <button className="rounded-full bg-ink px-4 py-2 text-sm text-white">{t('sites.add')}</button>
     }>
       {actionError && (
         <div className="mb-4">
-          <ErrorState title="Action failed" description={actionError} />
+          <ErrorState title={t('sites.actionFailed')} description={actionError} />
         </div>
       )}
       {status && (
         <div className="mb-4">
-          <StatusBanner title="Sites" description={status} />
+          <StatusBanner title={t('sites.title')} description={status} />
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <Card title="Configured Sites" subtitle="Manage sign-in targets">
+        <Card title={t('sites.listTitle')} subtitle={t('sites.listSubtitle')}>
           {loading ? (
-            <LoadingCard label="Loading sites" />
+            <LoadingCard label={t('sites.loading')} />
           ) : error ? (
-            <ErrorState title="Failed to load sites" description={error} />
+            <ErrorState title={t('sites.loadFailed')} description={error} />
           ) : (
             <div className="space-y-4">
               {sites.length === 0 ? (
                 <EmptyState
-                  title="No sites yet"
-                  description="Create your first sign-in target to get started."
+                  title={t('sites.emptyTitle')}
+                  description={t('sites.emptyDesc')}
                 />
               ) : (
                 sites.map(site => (
@@ -117,13 +118,13 @@ export default function Sites() {
                           <p className="text-sm text-muted">{site.url}</p>
                         </div>
                         <span className={`rounded-full px-3 py-1 text-xs ${site.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
-                          {site.enabled ? 'Enabled' : 'Disabled'}
+                          {site.enabled ? t('sites.enabled') : t('sites.disabled')}
                         </span>
                       </div>
                     </Link>
                     <div className="mt-3 flex items-center justify-between text-xs text-muted">
-                      <span>Plugin: {site.plugin_key || 'None'}</span>
-                      <button className="text-rose-600 hover:text-rose-700" onClick={() => handleDelete(site.id)}>Delete</button>
+                      <span>{t('sites.plugin')}: {site.plugin_key || t('sites.noPlugin')}</span>
+                      <button className="text-rose-600 hover:text-rose-700" onClick={() => handleDelete(site.id)}>{t('sites.delete')}</button>
                     </div>
                   </div>
                 ))
@@ -132,12 +133,12 @@ export default function Sites() {
           )}
         </Card>
 
-        <Card title="Create Site" subtitle="Quick add">
+        <Card title={t('sites.createTitle')} subtitle={t('sites.createSubtitle')}>
           <form className="space-y-4" onSubmit={handleCreate}>
             <div className="space-y-2">
               <input
                 className="w-full rounded-lg border border-line px-3 py-2"
-                placeholder="Name"
+                placeholder={t('sites.namePlaceholder')}
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 required
@@ -147,7 +148,7 @@ export default function Sites() {
             <div className="space-y-2">
               <input
                 className="w-full rounded-lg border border-line px-3 py-2"
-                placeholder="https://example.com"
+                placeholder={t('sites.urlPlaceholder')}
                 value={form.url}
                 onChange={e => setForm({ ...form, url: e.target.value })}
                 required
@@ -155,13 +156,13 @@ export default function Sites() {
               <FormError message={formErrors.url} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Plugin</label>
+              <label className="text-sm font-medium">{t('sites.pluginLabel')}</label>
               <select
                 className="w-full rounded-lg border border-line px-3 py-2"
                 value={form.plugin_key}
                 onChange={e => setForm({ ...form, plugin_key: e.target.value })}
               >
-                <option value="">No plugin</option>
+                <option value="">{t('sites.pluginEmpty')}</option>
                 {plugins.map(plugin => (
                   <option key={plugin.key} value={plugin.key}>{plugin.name}</option>
                 ))}
@@ -173,18 +174,18 @@ export default function Sites() {
                 checked={form.enabled}
                 onChange={e => setForm({ ...form, enabled: e.target.checked })}
               />
-              Enabled
+              {t('sites.enabledLabel')}
             </label>
-            <button className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">Create</button>
+            <button className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">{t('sites.create')}</button>
           </form>
           <div className="mt-6 space-y-2 text-sm">
-            <label className="text-xs uppercase tracking-wide text-muted">Admin token (for delete)</label>
+            <label className="text-xs uppercase tracking-wide text-muted">{t('sites.adminTokenLabel')}</label>
             <input
               className="w-full rounded-lg border border-line px-3 py-2"
               type="password"
               value={adminToken}
               onChange={e => setAdminToken(e.target.value)}
-              placeholder="Admin token"
+              placeholder={t('sites.adminTokenPlaceholder')}
             />
           </div>
         </Card>

@@ -6,6 +6,7 @@ import ErrorState from '../components/ErrorState'
 import EmptyState from '../components/EmptyState'
 import StatusBanner from '../components/StatusBanner'
 import { apiGet, createLogStream } from '../api/client'
+import { t } from '../i18n'
 
 const LEVEL_STYLE = {
   error: 'border-rose-200 bg-rose-50 text-rose-700',
@@ -27,7 +28,7 @@ export default function Logs() {
     setStreamError('')
     apiGet('/logs?limit=80')
       .then(setLogs)
-      .catch(err => setError(err?.message || 'Failed to load logs'))
+      .catch(err => setError(err?.message || t('logs.loadFailed')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -39,34 +40,34 @@ export default function Logs() {
         setLogs(prev => [...prev.slice(-80), payload])
       },
       () => {
-        setStreamError('Live stream disconnected')
+        setStreamError(t('logs.streamStopped'))
       }
     )
     return () => close()
   }, [streaming])
 
   return (
-    <Layout title="Logs" actions={
+    <Layout title={t('logs.title')} actions={
       <button
         className="rounded-full border border-line px-4 py-2 text-sm"
         onClick={() => setStreaming(prev => !prev)}
       >
-        {streaming ? 'Pause stream' : 'Resume stream'}
+        {streaming ? t('logs.pause') : t('logs.resume')}
       </button>
     }>
       {streamError && (
         <div className="mb-4">
-          <ErrorState title="Stream stopped" description={streamError} />
+          <ErrorState title={t('logs.streamStopped')} description={streamError} />
         </div>
       )}
-      <Card title="Live Logs" subtitle="Streaming updates from scheduler">
+      <Card title={t('logs.liveLogs')} subtitle={t('logs.liveLogsSubtitle')}>
         <div className="space-y-3">
           {loading ? (
-            <LoadingCard label="Loading logs" />
+            <LoadingCard label={t('logs.loading')} />
           ) : error ? (
-            <ErrorState title="Failed to load logs" description={error} />
+            <ErrorState title={t('logs.loadFailed')} description={error} />
           ) : logs.length === 0 ? (
-            <EmptyState title="No log entries yet" description="Run a site to see its activity here." />
+            <EmptyState title={t('logs.emptyTitle')} description={t('logs.emptyDesc')} />
           ) : (
             logs.map(log => (
               <div key={`${log.id}-${log.created_at}`} className={`rounded-lg border p-3 ${LEVEL_STYLE[log.level] || LEVEL_STYLE.info}`}>
@@ -84,7 +85,7 @@ export default function Logs() {
                 )}
                 <p className="mt-2 text-xs text-muted">{new Date(log.created_at).toLocaleString()}</p>
                 {log.level === 'error' && log.payload?.error && (
-                  <StatusBanner title="Error" description={log.payload.error} tone="error" />
+                  <StatusBanner title={t('logs.errorTitle')} description={log.payload.error} tone="error" />
                 )}
               </div>
             ))

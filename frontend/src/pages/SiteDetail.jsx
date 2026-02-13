@@ -9,6 +9,7 @@ import FormError from '../components/FormError'
 import ConfigField from '../components/ConfigField'
 import StatusBanner from '../components/StatusBanner'
 import { apiDelete, apiGet, apiPatch, apiPost } from '../api/client'
+import { t } from '../i18n'
 
 export default function SiteDetail() {
   const { id } = useParams()
@@ -49,7 +50,7 @@ export default function SiteDetail() {
           notes: siteData.notes || ''
         })
       } catch (err) {
-        setError(err?.message || 'Failed to load site')
+        setError(err?.message || t('siteDetail.loadFailed'))
       } finally {
         setLoading(false)
       }
@@ -64,16 +65,16 @@ export default function SiteDetail() {
 
   function validateForm(values) {
     const next = {}
-    if (!values.name.trim()) next.name = 'Name is required'
-    if (!values.url.trim()) next.url = 'URL is required'
-    else if (!/^https?:\/\//i.test(values.url.trim())) next.url = 'URL must start with http(s)://'
+    if (!values.name.trim()) next.name = t('sites.nameRequired')
+    if (!values.url.trim()) next.url = t('sites.urlRequired')
+    else if (!/^https?:\/\//i.test(values.url.trim())) next.url = t('sites.urlInvalid')
     if (activePlugin?.config_schema) {
       activePlugin.config_schema.forEach(field => {
         if (field.required) {
           const current = values.plugin_config?.[field.key]
           const isEmpty = field.field_type === "boolean" ? current !== true : !current
           if (isEmpty) {
-            next[`plugin_config.${field.key}`] = `${field.label || field.key} is required`
+            next[`plugin_config.${field.key}`] = t('common.requiredField', { field: field.label || field.key })
           }
         }
       })
@@ -102,9 +103,9 @@ export default function SiteDetail() {
       const updated = await apiPatch(`/sites/${id}`, form)
       setSite(updated)
       setFormErrors({})
-      setStatus('Site saved')
+      setStatus(t('siteDetail.saved'))
     } catch (err) {
-      setActionError(err?.message || 'Failed to save site')
+      setActionError(err?.message || t('siteDetail.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -115,44 +116,44 @@ export default function SiteDetail() {
     try {
       const run = await apiPost('/runs', { site_id: Number(id) })
       setRuns(prev => [run, ...prev])
-      setStatus('Run queued')
+      setStatus(t('siteDetail.runQueued'))
     } catch (err) {
-      setActionError(err?.message || 'Failed to trigger run')
+      setActionError(err?.message || t('siteDetail.triggerFailed'))
     }
   }
 
   async function deleteSite() {
     if (!adminToken.trim()) {
-      setActionError('Admin token required to delete site')
+      setActionError(t('siteDetail.deleteTokenRequired'))
       return
     }
     setActionError('')
     try {
       await apiDelete(`/sites/${id}`, adminToken)
-      setStatus('Site deleted')
+      setStatus(t('siteDetail.deleted'))
     } catch (err) {
       if (err?.status === 401) {
-        setActionError('Admin token invalid')
+        setActionError(t('siteDetail.adminTokenInvalid'))
       } else if (err?.status === 403) {
-        setActionError('Admin token not configured')
+        setActionError(t('siteDetail.adminTokenNotConfigured'))
       } else {
-        setActionError(err?.message || 'Failed to delete site')
+        setActionError(err?.message || t('siteDetail.deleteFailed'))
       }
     }
   }
 
   if (loading) {
     return (
-      <Layout title="Site details">
-        <LoadingCard label="Loading site" />
+      <Layout title={t('siteDetail.title')}>
+        <LoadingCard label={t('siteDetail.loading')} />
       </Layout>
     )
   }
 
   if (error) {
     return (
-      <Layout title="Site details">
-        <ErrorState title="Site unavailable" description={error} />
+      <Layout title={t('siteDetail.title')}>
+        <ErrorState title={t('siteDetail.unavailable')} description={error} />
       </Layout>
     )
   }
@@ -161,20 +162,20 @@ export default function SiteDetail() {
 
   return (
     <Layout title={site.name} actions={
-      <button onClick={triggerRun} className="rounded-full bg-ink px-4 py-2 text-sm text-white">Run now</button>
+      <button onClick={triggerRun} className="rounded-full bg-ink px-4 py-2 text-sm text-white">{t('siteDetail.runNow')}</button>
     }>
       {actionError && (
         <div className="mb-4">
-          <ErrorState title="Action failed" description={actionError} />
+          <ErrorState title={t('siteDetail.actionFailed')} description={actionError} />
         </div>
       )}
       {status && (
         <div className="mb-4">
-          <StatusBanner title="Site" description={status} />
+          <StatusBanner title={t('siteDetail.title')} description={status} />
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-[1.5fr,1fr]">
-        <Card title="Site Details" subtitle="Update configuration">
+        <Card title={t('siteDetail.siteDetails')} subtitle={t('siteDetail.updateConfig')}>
           <form className="space-y-4" onSubmit={saveSite}>
             <div className="grid gap-3">
               <div className="space-y-2">
@@ -185,16 +186,16 @@ export default function SiteDetail() {
                 <input className="w-full rounded-lg border border-line px-3 py-2" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
                 <FormError message={formErrors.url} />
               </div>
-              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder="Cookie domain" value={form.cookie_domain} onChange={e => setForm({ ...form, cookie_domain: e.target.value })} />
-              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder="CookieCloud profile" value={form.cookiecloud_profile} onChange={e => setForm({ ...form, cookiecloud_profile: e.target.value })} />
+              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookieDomain')} value={form.cookie_domain} onChange={e => setForm({ ...form, cookie_domain: e.target.value })} />
+              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookiecloudProfile')} value={form.cookiecloud_profile} onChange={e => setForm({ ...form, cookiecloud_profile: e.target.value })} />
               <div className="space-y-2">
-                <label className="text-sm font-medium">Plugin</label>
+                <label className="text-sm font-medium">{t('sites.pluginLabel')}</label>
                 <select
                   className="w-full rounded-lg border border-line px-3 py-2"
                   value={form.plugin_key}
                   onChange={e => setForm({ ...form, plugin_key: e.target.value, plugin_config: {} })}
                 >
-                  <option value="">No plugin</option>
+                  <option value="">{t('sites.pluginEmpty')}</option>
                   {plugins.map(plugin => (
                     <option key={plugin.key} value={plugin.key}>{plugin.name}</option>
                   ))}
@@ -202,7 +203,7 @@ export default function SiteDetail() {
               </div>
               {activePlugin?.config_schema && activePlugin.config_schema.length > 0 && (
                 <div className="space-y-3 rounded-lg border border-line p-3">
-                  <p className="text-sm font-medium">Plugin Configuration</p>
+                  <p className="text-sm font-medium">{t('siteDetail.pluginConfig')}</p>
                   {activePlugin.config_schema.map(field => (
                     <ConfigField
                       key={field.key}
@@ -214,46 +215,46 @@ export default function SiteDetail() {
                   ))}
                 </div>
               )}
-              <textarea className="min-h-[120px] w-full rounded-lg border border-line px-3 py-2" placeholder="Notes" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+              <textarea className="min-h-[120px] w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.notes')} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
               <label className="flex items-center gap-2 text-sm text-muted">
                 <input type="checkbox" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })} />
-                Enabled
+                {t('siteDetail.enabled')}
               </label>
             </div>
-            <button className="rounded-full bg-ink px-4 py-2 text-sm text-white" disabled={saving}>Save</button>
+            <button className="rounded-full bg-ink px-4 py-2 text-sm text-white" disabled={saving}>{t('siteDetail.save')}</button>
           </form>
         </Card>
 
         <div className="space-y-6">
-          <Card title="Recent Runs" subtitle="Last 10 runs">
+          <Card title={t('siteDetail.recentRuns')} subtitle={t('siteDetail.recentRunsSubtitle')}>
             <div className="space-y-3">
               {runs.length === 0 ? (
                 <EmptyState
-                  title="No runs yet"
-                  description="Trigger a run to see it appear here."
+                  title={t('siteDetail.noRuns')}
+                  description={t('siteDetail.noRunsDesc')}
                 />
               ) : (
                 runs.slice(0, 10).map(run => (
                   <div key={run.id} className="rounded-lg border border-line p-3">
-                    <p className="text-sm font-medium">Run #{run.id}</p>
-                    <p className="text-xs text-muted">Status: {run.status}</p>
+                    <p className="text-sm font-medium">{t('dashboard.runLabel', { id: run.id, siteId: run.site_id })}</p>
+                    <p className="text-xs text-muted">{t('siteDetail.runStatus', { status: run.status })}</p>
                   </div>
                 ))
               )}
             </div>
           </Card>
 
-          <Card title="Danger Zone" subtitle="Destructive actions">
+          <Card title={t('siteDetail.dangerZone')} subtitle={t('siteDetail.destructive')}>
             <div className="space-y-3 text-sm">
-              <p className="text-muted">Deleting a site removes it permanently.</p>
+              <p className="text-muted">{t('siteDetail.destructive')}</p>
               <input
                 className="w-full rounded-lg border border-line px-3 py-2"
                 type="password"
-                placeholder="Admin token"
+                placeholder={t('siteDetail.adminTokenPlaceholder')}
                 value={adminToken}
                 onChange={e => setAdminToken(e.target.value)}
               />
-              <button className="w-full rounded-full bg-rose-600 px-4 py-2 text-sm text-white" onClick={deleteSite} type="button">Delete site</button>
+              <button className="w-full rounded-full bg-rose-600 px-4 py-2 text-sm text-white" onClick={deleteSite} type="button">{t('siteDetail.delete')}</button>
             </div>
           </Card>
         </div>

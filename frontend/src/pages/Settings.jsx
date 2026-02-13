@@ -7,6 +7,7 @@ import EmptyState from '../components/EmptyState'
 import FormError from '../components/FormError'
 import StatusBanner from '../components/StatusBanner'
 import { apiGet, apiPatch, apiPost } from '../api/client'
+import { t } from '../i18n'
 
 export default function Settings() {
   const [config, setConfig] = useState(null)
@@ -31,21 +32,21 @@ export default function Settings() {
           setUiSettings(data.ui_settings)
         }
       })
-      .catch(err => setError(err?.message || 'Failed to load config'))
+      .catch(err => setError(err?.message || t('settings.loadFailed')))
       .finally(() => setLoading(false))
   }, [])
 
   function validateProfile() {
     const next = {}
-    if (!profile.trim()) next.profile = 'Profile is required'
+    if (!profile.trim()) next.profile = t('settings.profileRequired')
     return next
   }
 
   function validateSettings() {
     const next = {}
-    if (!uiSettings.theme) next.theme = 'Theme is required'
-    if (!uiSettings.timezone) next.timezone = 'Timezone is required'
-    if (!adminToken.trim()) next.adminToken = 'Admin token is required to save settings'
+    if (!uiSettings.theme) next.theme = t('common.required')
+    if (!uiSettings.timezone) next.timezone = t('common.required')
+    if (!adminToken.trim()) next.adminToken = t('settings.adminTokenRequired')
     return next
   }
 
@@ -60,8 +61,9 @@ export default function Settings() {
       setSyncResult(result)
       setFormErrors({})
     } catch (err) {
-      setActionError(err?.message || 'Sync failed')
-      setSyncResult({ message: err?.message || 'Sync failed' })
+      const message = err?.message || t('settings.syncFailed')
+      setActionError(message)
+      setSyncResult({ message })
     }
   }
 
@@ -74,41 +76,41 @@ export default function Settings() {
     try {
       const result = await apiPatch('/config', uiSettings, adminToken)
       setUiSettings(result.settings)
-      setSaveStatus('Settings saved')
+      setSaveStatus(t('settings.saved'))
       setFormErrors({})
     } catch (err) {
       if (err?.status === 403) {
-        setActionError('Admin token is not configured on the server')
+        setActionError(t('settings.adminTokenNotConfigured'))
       } else if (err?.status === 401) {
-        setActionError('Admin token invalid')
+        setActionError(t('settings.adminTokenInvalid'))
       } else {
-        setActionError(err?.message || 'Failed to save settings')
+        setActionError(err?.message || t('settings.saveFailed'))
       }
     }
   }
 
   return (
-    <Layout title="Settings">
+    <Layout title={t('settings.title')}>
       {actionError && (
         <div className="mb-4">
-          <ErrorState title="Action failed" description={actionError} />
+          <ErrorState title={t('settings.actionFailed')} description={actionError} />
         </div>
       )}
       {saveStatus && (
         <div className="mb-4">
-          <StatusBanner title="Settings" description={saveStatus} />
+          <StatusBanner title={t('settings.title')} description={saveStatus} />
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-[1.4fr,1fr]">
-        <Card title="Environment" subtitle="Masked configuration">
+        <Card title={t('settings.environment')} subtitle={t('settings.environmentSubtitle')}>
           {loading ? (
-            <LoadingCard label="Loading configuration" />
+            <LoadingCard label={t('settings.loadingConfig')} />
           ) : error ? (
-            <ErrorState title="Failed to load configuration" description={error} />
+            <ErrorState title={t('settings.loadFailed')} description={error} />
           ) : config ? (
             <div className="space-y-2 text-sm">
               {Object.entries(config).length === 0 ? (
-                <EmptyState title="No config available" description="Set environment variables to see them here." />
+                <EmptyState title={t('settings.noEnv')} description={t('settings.noEnvDesc')} />
               ) : (
                 Object.entries(config).map(([key, value]) => (
                   key !== 'plugins' && key !== 'ui_settings' ? (
@@ -121,28 +123,28 @@ export default function Settings() {
               )}
             </div>
           ) : (
-            <EmptyState title="No config" description="Config was not returned." />
+            <EmptyState title={t('settings.noConfig')} description={t('settings.noConfigDesc')} />
           )}
         </Card>
 
         <div className="space-y-6">
-          <Card title="Console Settings" subtitle="UI preferences">
+          <Card title={t('settings.console')} subtitle={t('settings.consoleSubtitle')}>
             <div className="space-y-4 text-sm">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Theme</label>
+                <label className="text-sm font-medium">{t('settings.theme')}</label>
                 <select
                   className="w-full rounded-lg border border-line px-3 py-2"
                   value={uiSettings.theme}
                   onChange={e => setUiSettings(prev => ({ ...prev, theme: e.target.value }))}
                 >
-                  <option value="system">System</option>
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
+                  <option value="system">{t('settings.themeSystem')}</option>
+                  <option value="light">{t('settings.themeLight')}</option>
+                  <option value="dark">{t('settings.themeDark')}</option>
                 </select>
                 <FormError message={formErrors.theme} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Timezone</label>
+                <label className="text-sm font-medium">{t('settings.timezone')}</label>
                 <input
                   className="w-full rounded-lg border border-line px-3 py-2"
                   value={uiSettings.timezone}
@@ -151,16 +153,16 @@ export default function Settings() {
                 <FormError message={formErrors.timezone} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Notifications level</label>
+                <label className="text-sm font-medium">{t('settings.notifications')}</label>
                 <select
                   className="w-full rounded-lg border border-line px-3 py-2"
                   value={uiSettings.notifications?.level || 'info'}
                   onChange={e => setUiSettings(prev => ({ ...prev, notifications: { ...prev.notifications, level: e.target.value } }))}
                 >
-                  <option value="debug">Debug</option>
-                  <option value="info">Info</option>
-                  <option value="warning">Warning</option>
-                  <option value="error">Error</option>
+                  <option value="debug">{t('settings.notificationsDebug')}</option>
+                  <option value="info">{t('settings.notificationsInfo')}</option>
+                  <option value="warning">{t('settings.notificationsWarning')}</option>
+                  <option value="error">{t('settings.notificationsError')}</option>
                 </select>
               </div>
               <label className="flex items-center gap-2 text-sm text-muted">
@@ -169,37 +171,37 @@ export default function Settings() {
                   checked={uiSettings.notifications?.enabled ?? true}
                   onChange={e => setUiSettings(prev => ({ ...prev, notifications: { ...prev.notifications, enabled: e.target.checked } }))}
                 />
-                Enable notifications
+                {t('settings.notificationsEnable')}
               </label>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Admin token</label>
+                <label className="text-sm font-medium">{t('settings.adminToken')}</label>
                 <input
                   className="w-full rounded-lg border border-line px-3 py-2"
                   type="password"
                   value={adminToken}
                   onChange={e => setAdminToken(e.target.value)}
-                  placeholder="Required to save"
+                  placeholder={t('settings.adminTokenRequired')}
                 />
                 <FormError message={formErrors.adminToken} />
               </div>
-              <button onClick={saveSettings} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">Save settings</button>
+              <button onClick={saveSettings} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">{t('settings.save')}</button>
             </div>
           </Card>
 
-          <Card title="CookieCloud" subtitle="Manual sync">
+          <Card title={t('settings.cookiecloud')} subtitle={t('settings.cookiecloudSubtitle')}>
             <div className="space-y-3">
               <div className="space-y-2">
                 <input
                   className="w-full rounded-lg border border-line px-3 py-2"
-                  placeholder="Profile name"
+                  placeholder={t('settings.profilePlaceholder')}
                   value={profile}
                   onChange={e => setProfile(e.target.value)}
                 />
                 <FormError message={formErrors.profile} />
               </div>
-              <button onClick={syncCookieCloud} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">Sync cookies</button>
+              <button onClick={syncCookieCloud} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">{t('settings.syncCookies')}</button>
               {syncResult && (
-                <StatusBanner title="CookieCloud" description={syncResult.message} tone={syncResult.ok ? 'info' : 'error'} />
+                <StatusBanner title={t('settings.cookiecloud')} description={syncResult.message} tone={syncResult.ok ? 'info' : 'error'} />
               )}
             </div>
           </Card>

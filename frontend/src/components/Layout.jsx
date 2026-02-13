@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { t } from '../i18n'
+import LanguageToggle from './LanguageToggle'
 
 const NAV_ITEMS = [
   { to: '/', label: 'nav.dashboard' },
@@ -16,9 +17,9 @@ export default function Layout({ title, actions, children }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="text-lg font-semibold text-ink">SignFlow</Link>
-          <div className="flex items-center gap-4 text-sm text-muted">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-4">
+          <Link to="/" className="text-lg font-semibold text-ink">{t('app.brand')}</Link>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted">
             {NAV_ITEMS.map(item => (
               <Link
                 key={item.to}
@@ -28,6 +29,7 @@ export default function Layout({ title, actions, children }) {
                 {t(item.label)}
               </Link>
             ))}
+            <LanguageToggle />
           </div>
         </div>
       </nav>
