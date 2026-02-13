@@ -8,7 +8,7 @@ class SiteBase(BaseModel):
     url: AnyHttpUrl
     enabled: bool = True
     cookie_domain: Optional[str] = None
-    cookiecloud_profile: Optional[str] = None
+    cookiecloud_uuid: Optional[str] = None
     plugin_key: Optional[str] = None
     plugin_config: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None
@@ -23,7 +23,7 @@ class SiteUpdate(BaseModel):
     url: Optional[AnyHttpUrl] = None
     enabled: Optional[bool] = None
     cookie_domain: Optional[str] = None
-    cookiecloud_profile: Optional[str] = None
+    cookiecloud_uuid: Optional[str] = None
     plugin_key: Optional[str] = None
     plugin_config: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None

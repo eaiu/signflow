@@ -16,7 +16,7 @@ export default function SiteDetail() {
   const [site, setSite] = useState(null)
   const [runs, setRuns] = useState([])
   const [plugins, setPlugins] = useState([])
-  const [form, setForm] = useState({ name: '', url: '', enabled: true, cookie_domain: '', cookiecloud_profile: '', plugin_key: '', plugin_config: {}, notes: '' })
+  const [form, setForm] = useState({ name: '', url: '', enabled: true, cookie_domain: '', cookiecloud_uuid: '', plugin_key: '', plugin_config: {}, notes: '' })
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -44,7 +44,7 @@ export default function SiteDetail() {
           url: siteData.url,
           enabled: siteData.enabled,
           cookie_domain: siteData.cookie_domain || '',
-          cookiecloud_profile: siteData.cookiecloud_profile || '',
+          cookiecloud_uuid: siteData.cookiecloud_uuid || '',
           plugin_key: siteData.plugin_key || '',
           plugin_config: siteData.plugin_config || {},
           notes: siteData.notes || ''
@@ -187,7 +187,7 @@ export default function SiteDetail() {
                 <FormError message={formErrors.url} />
               </div>
               <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookieDomain')} value={form.cookie_domain} onChange={e => setForm({ ...form, cookie_domain: e.target.value })} />
-              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookiecloudProfile')} value={form.cookiecloud_profile} onChange={e => setForm({ ...form, cookiecloud_profile: e.target.value })} />
+              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookiecloudUuid')} value={form.cookiecloud_uuid} onChange={e => setForm({ ...form, cookiecloud_uuid: e.target.value })} />
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('sites.pluginLabel')}</label>
                 <select

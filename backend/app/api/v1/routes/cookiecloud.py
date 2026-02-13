@@ -5,6 +5,6 @@ router = APIRouter()
 
 
 @router.post("/sync")
-def sync_cookiecloud(profile: str = "default"):
+def sync_cookiecloud(uuid: str | None = None):
     client = CookieCloudClient()
-    return client.sync(profile)
+    return client.sync(uuid)

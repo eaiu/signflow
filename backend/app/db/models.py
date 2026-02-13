@@ -9,7 +9,7 @@ class Site(SQLModel, table=True):
     url: str
     enabled: bool = True
     cookie_domain: Optional[str] = None
-    cookiecloud_profile: Optional[str] = None
+    cookiecloud_uuid: Optional[str] = None
     plugin_key: Optional[str] = None
     plugin_config: Optional[str] = Field(default=None, sa_column_kwargs={"nullable": True})
     notes: Optional[str] = None

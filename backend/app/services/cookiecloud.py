@@ -3,69 +3,97 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 import requests
 
 from app.core.config import get_settings
-from app.services.crypto import encrypt_cryptojs
+from app.services.crypto import decrypt_cryptojs
 
 
 class CookieCloudClient:
     def __init__(self):
         self.settings = get_settings()
 
-    def sync(self, profile: str) -> Dict[str, Any]:
+    def sync(self, uuid: Optional[str] = None) -> Dict[str, Any]:
+        """Fetch CookieCloud payload(s), decrypt, and return cookie/localStorage data."""
         if not self.settings.cookiecloud_url:
             return {"ok": False, "message": "CookieCloud not configured"}
 
-        payload = self._build_payload(profile)
-        if not payload["ok"]:
-            return payload
+        uuid_list = self._uuid_list(uuid)
+        if not uuid_list:
+            return {"ok": False, "message": "CookieCloud uuid missing"}
 
+        if not self.settings.cookiecloud_password:
+            return {"ok": False, "message": "CookieCloud password missing"}
+
+        all_payloads = []
+        for item in uuid_list:
+            payload = self._fetch_payload(item)
+            if not payload:
+                continue
+            all_payloads.append({"uuid": item, **payload})
+
+        if not all_payloads:
+            return {"ok": False, "message": "CookieCloud payload empty"}
+
+        results = []
+        for payload in all_payloads:
+            decrypted = self._decrypt_payload(payload["uuid"], payload.get("encrypted"))
+            if not decrypted:
+                results.append({"uuid": payload["uuid"], "ok": False, "message": "decrypt failed"})
+                continue
+            try:
+                parsed = json.loads(decrypted)
+            except json.JSONDecodeError:
+                results.append({"uuid": payload["uuid"], "ok": False, "message": "invalid json"})
+                continue
+            results.append({
+                "uuid": payload["uuid"],
+                "ok": True,
+                "cookie_data": parsed.get("cookie_data") or {},
+                "local_storage_data": parsed.get("local_storage_data") or {},
+            })
+
+        return {"ok": True, "count": len(results), "results": results}
+
+    def _uuid_list(self, uuid: Optional[str]) -> List[str]:
+        if uuid:
+            return [uuid]
+        setting = (self.settings.get_cookiecloud_uuid() or "").strip()
+        if not setting:
+            return []
+        return [item.strip() for item in setting.split(",") if item.strip()]
+
+    def _fetch_payload(self, uuid: str) -> Dict[str, Any] | None:
+        url = self.settings.cookiecloud_url.rstrip("/") + f"/get/{uuid}"
         try:
-            url = self.settings.cookiecloud_url.rstrip("/") + "/update"
-            if self.settings.cookiecloud_send_json:
-                response = requests.post(
-                    url,
-                    json=payload["data"],
-                    timeout=self.settings.cookiecloud_timeout,
-                    verify=self.settings.cookiecloud_verify_ssl,
-                )
-            else:
-                response = requests.post(
-                    url,
-                    data=payload["data"],
-                    timeout=self.settings.cookiecloud_timeout,
-                    verify=self.settings.cookiecloud_verify_ssl,
-                )
+            response = requests.get(
+                url,
+                timeout=self.settings.cookiecloud_timeout,
+                verify=self.settings.cookiecloud_verify_ssl,
+            )
             response.raise_for_status()
             data = response.json()
-            ok = data.get("action") == "done"
-            return {
-                "ok": ok,
-                "profile": profile,
-                "message": data.get("message", "CookieCloud sync done" if ok else "CookieCloud sync failed"),
-                "response": data,
-            }
-        except requests.RequestException as exc:
-            return {"ok": False, "profile": profile, "message": f"CookieCloud request failed: {exc}"}
+            if not isinstance(data, dict):
+                return None
+            return data
+        except requests.RequestException:
+            return None
 
-    def _build_payload(self, profile: str) -> Dict[str, Any]:
-        if not self.settings.cookiecloud_key or not self.settings.cookiecloud_password:
-            return {"ok": False, "message": "CookieCloud key/password missing"}
+    def _decrypt_payload(self, uuid: str, encrypted: str | None) -> str | None:
+        if not encrypted:
+            return None
+        for use_dash in (True, False):
+            key = self._crypt_key(uuid, self.settings.cookiecloud_password, use_dash)
+            try:
+                return decrypt_cryptojs(encrypted, key).decode("utf-8")
+            except Exception:
+                continue
+        return None
 
-        cookie_data = {"_meta": {"profile": profile}}
-        payload = json.dumps({"cookie_data": cookie_data}).encode("utf-8")
-        encrypted = encrypt_cryptojs(payload, self._crypt_key())
-        return {
-            "ok": True,
-            "data": {
-                "uuid": self.settings.cookiecloud_key,
-                "encrypted": encrypted,
-            },
-        }
-
-    def _crypt_key(self) -> bytes:
+    @staticmethod
+    def _crypt_key(uuid: str, password: str, use_dash: bool = True) -> bytes:
         md5 = hashlib.md5()
-        md5.update(f"{self.settings.cookiecloud_key}-{self.settings.cookiecloud_password}".encode("utf-8"))
+        sep = "-" if use_dash else ""
+        md5.update(f"{uuid}{sep}{password}".encode("utf-8"))
         return md5.hexdigest()[:16].encode("utf-8")

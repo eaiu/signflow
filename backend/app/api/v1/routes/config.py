@@ -10,7 +10,9 @@ router = APIRouter()
 
 @router.get("/", response_model=ConfigResponse)
 def get_config():
-    settings = get_settings().masked
+    app_settings = get_settings()
+    settings = app_settings.masked
+    settings["cookiecloud_uuid"] = app_settings.get_cookiecloud_uuid()
     settings["plugins"] = list_plugins()
     settings["ui_settings"] = load_settings()
     return settings

@@ -52,14 +52,14 @@ class RunExecutor:
                 event="run.target",
                 payload={"site_id": site.id, "site_name": site.name, "site_url": site.url},
             )
-            if site.cookiecloud_profile:
+            if site.cookiecloud_uuid:
                 log_event(
                     self.session,
-                    f"CookieCloud profile: {site.cookiecloud_profile}",
+                    f"CookieCloud uuid: {site.cookiecloud_uuid}",
                     level="debug",
                     run_id=run.id,
                     event="run.cookiecloud",
-                    payload={"profile": site.cookiecloud_profile},
+                    payload={"uuid": site.cookiecloud_uuid},
                 )
         try:
             result = self._execute_run(run, site)
@@ -112,7 +112,7 @@ class RunExecutor:
             site_name=site.name,
             site_url=site.url,
             cookie_domain=site.cookie_domain,
-            cookiecloud_profile=site.cookiecloud_profile,
+            cookiecloud_uuid=site.cookiecloud_uuid,
             plugin_config=deserialize_config(plugin_config_raw),
             started_at=run.started_at or datetime.utcnow(),
             notes=site.notes,

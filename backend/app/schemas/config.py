@@ -9,6 +9,7 @@ class ConfigResponse(BaseModel):
     database_url: str
     cookiecloud_url: str
     cookiecloud_key: str
+    cookiecloud_uuid: str
     cookiecloud_password: str
     cookiecloud_timeout: int
     cookiecloud_verify_ssl: bool

@@ -11,8 +11,8 @@ import { t } from '../i18n'
 
 export default function Settings() {
   const [config, setConfig] = useState(null)
-  const [profile, setProfile] = useState('default')
   const [syncResult, setSyncResult] = useState(null)
+  const [cookiecloudUuid, setCookiecloudUuid] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -31,6 +31,9 @@ export default function Settings() {
         if (data?.ui_settings) {
           setUiSettings(data.ui_settings)
         }
+        if (data?.cookiecloud_uuid) {
+          setCookiecloudUuid(data.cookiecloud_uuid)
+        }
       })
       .catch(err => setError(err?.message || t('settings.loadFailed')))
       .finally(() => setLoading(false))
@@ -38,7 +41,7 @@ export default function Settings() {
 
   function validateProfile() {
     const next = {}
-    if (!profile.trim()) next.profile = t('settings.profileRequired')
+    if (!cookiecloudUuid.trim()) next.cookiecloudUuid = t('settings.cookiecloudUuidRequired')
     return next
   }
 
@@ -57,7 +60,7 @@ export default function Settings() {
     setSyncResult(null)
     setActionError('')
     try {
-      const result = await apiPost(`/cookiecloud/sync?profile=${encodeURIComponent(profile.trim())}`, {})
+      const result = await apiPost(`/cookiecloud/sync?uuid=${encodeURIComponent(cookiecloudUuid.trim())}`, {})
       setSyncResult(result)
       setFormErrors({})
     } catch (err) {
@@ -74,7 +77,7 @@ export default function Settings() {
     setSaveStatus('')
     setActionError('')
     try {
-      const result = await apiPatch('/config', uiSettings, adminToken)
+      const result = await apiPatch('/config', { ...uiSettings, cookiecloud_uuid: cookiecloudUuid || null }, adminToken)
       setUiSettings(result.settings)
       setSaveStatus(t('settings.saved'))
       setFormErrors({})
@@ -193,11 +196,11 @@ export default function Settings() {
               <div className="space-y-2">
                 <input
                   className="w-full rounded-lg border border-line px-3 py-2"
-                  placeholder={t('settings.profilePlaceholder')}
-                  value={profile}
-                  onChange={e => setProfile(e.target.value)}
+                  placeholder={t('settings.cookiecloudUuidPlaceholder')}
+                  value={cookiecloudUuid}
+                  onChange={e => setCookiecloudUuid(e.target.value)}
                 />
-                <FormError message={formErrors.profile} />
+                <FormError message={formErrors.cookiecloudUuid} />
               </div>
               <button onClick={syncCookieCloud} className="w-full rounded-full bg-ink px-4 py-2 text-sm text-white">{t('settings.syncCookies')}</button>
               {syncResult && (

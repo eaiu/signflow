@@ -28,7 +28,7 @@ class PluginContext:
     site_name: str
     site_url: str
     cookie_domain: Optional[str]
-    cookiecloud_profile: Optional[str]
+    cookiecloud_uuid: Optional[str]
     plugin_config: Optional[Dict[str, Any]]
     started_at: datetime
     notes: Optional[str]

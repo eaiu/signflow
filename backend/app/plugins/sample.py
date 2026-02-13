@@ -41,7 +41,7 @@ class CookieCloudPlugin(SitePlugin):
     category = "integration"
     config_schema = [
         PluginConfigField(
-            key="profile",
+            key="uuid",
             label="Override profile",
             field_type="text",
             placeholder="Profile name",
@@ -52,8 +52,8 @@ class CookieCloudPlugin(SitePlugin):
     def run(self, context: PluginContext) -> PluginResult:
         profile_override = None
         if context.plugin_config:
-            profile_override = context.plugin_config.get("profile")
-        profile = profile_override or context.cookiecloud_profile
+            profile_override = context.plugin_config.get("uuid")
+        uuid = profile_override or context.cookiecloud_uuid
         if not profile:
             return PluginResult.failure("No CookieCloud profile configured.")
         return PluginResult.success(

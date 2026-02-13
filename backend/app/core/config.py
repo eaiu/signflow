@@ -11,6 +11,7 @@ class Settings(BaseModel):
     database_url: str = "sqlite:///./data/signflow.db"
     cookiecloud_url: str = ""
     cookiecloud_key: str = ""
+    cookiecloud_uuid: str = ""
     cookiecloud_password: str = ""
     cookiecloud_timeout: int = 8
     cookiecloud_verify_ssl: bool = True
@@ -22,6 +23,9 @@ class Settings(BaseModel):
 
     class Config:
         frozen = True
+
+    def get_cookiecloud_uuid(self) -> str | None:
+        return self.cookiecloud_uuid or self.cookiecloud_key
 
     @property
     def masked(self) -> dict:
@@ -39,6 +43,7 @@ class Settings(BaseModel):
             "database_url": self.database_url,
             "cookiecloud_url": self.cookiecloud_url,
             "cookiecloud_key": mask(self.cookiecloud_key),
+            "cookiecloud_uuid": mask(self.cookiecloud_uuid),
             "cookiecloud_password": mask(self.cookiecloud_password),
             "cookiecloud_timeout": self.cookiecloud_timeout,
             "cookiecloud_verify_ssl": self.cookiecloud_verify_ssl,
@@ -59,6 +64,7 @@ def get_settings() -> Settings:
         database_url=os.getenv("DATABASE_URL", "sqlite:///./data/signflow.db"),
         cookiecloud_url=os.getenv("COOKIECLOUD_URL", ""),
         cookiecloud_key=os.getenv("COOKIECLOUD_KEY", ""),
+        cookiecloud_uuid=os.getenv("COOKIECLOUD_UUID", ""),
         cookiecloud_password=os.getenv("COOKIECLOUD_PASSWORD", ""),
         cookiecloud_timeout=int(os.getenv("COOKIECLOUD_TIMEOUT", "8")),
         cookiecloud_verify_ssl=os.getenv("COOKIECLOUD_VERIFY_SSL", "true").lower() != "false",
