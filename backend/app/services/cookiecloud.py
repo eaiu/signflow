@@ -56,7 +56,43 @@ class CookieCloudClient:
                 "local_storage_data": parsed.get("local_storage_data") or {},
             })
 
-        return {"ok": True, "count": len(results), "results": results}
+        summary = self._summarize(results)
+        top_3 = ", ".join([f"{d['domain']} ({d['count']})" for d in summary['top_domains'][:3]])
+        message = f"Synced {summary['total_cookies']} cookies from {summary['total_domains']} domains. Top: {top_3}"
+        if summary['total_domains'] > 3:
+            message += " ..."
+
+        return {
+            "ok": True, 
+            "message": message,
+            "summary": summary,
+            "results": results
+        }
+
+    def _summarize(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        total_cookies = 0
+        domain_counts = {}
+        for res in results:
+            if not res.get("ok"): continue
+            data = res.get("cookie_data") or {}
+            if isinstance(data, dict):
+                for domain, cookies in data.items():
+                    count = len(cookies) if isinstance(cookies, list) else 1
+                    total_cookies += count
+                    d = domain.lstrip('.')
+                    domain_counts[d] = domain_counts.get(d, 0) + count
+            elif isinstance(data, list):
+                total_cookies += len(data)
+                for c in data:
+                    d = (c.get("domain") or "unknown").lstrip('.')
+                    domain_counts[d] = domain_counts.get(d, 0) + 1
+        
+        sorted_domains = sorted(domain_counts.items(), key=lambda x: x[1], reverse=True)
+        return {
+            "total_cookies": total_cookies,
+            "total_domains": len(domain_counts),
+            "top_domains": [{"domain": d, "count": c} for d, c in sorted_domains]
+        }
 
     def _uuid_list(self, uuid: Optional[str]) -> List[str]:
         if uuid:
