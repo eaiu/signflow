@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { t } from '../i18n'
 import LanguageToggle from './LanguageToggle'
+import { clearApiToken } from '../api/auth'
 
 const NAV_ITEMS = [
   { to: '/', label: 'nav.dashboard' },
@@ -13,6 +14,12 @@ const NAV_ITEMS = [
 
 export default function Layout({ title, actions, children }) {
   const location = useLocation()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    clearApiToken()
+    navigate('/login')
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -30,6 +37,12 @@ export default function Layout({ title, actions, children }) {
               </Link>
             ))}
             <LanguageToggle />
+            <button
+              onClick={handleLogout}
+              className="rounded-full border border-line px-3 py-1 text-xs text-muted hover:text-ink"
+            >
+              {t('nav.logout')}
+            </button>
           </div>
         </div>
       </nav>

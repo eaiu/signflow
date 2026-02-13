@@ -5,9 +5,8 @@
   "nav.logs": "Logs",
   "nav.settings": "Settings",
   "nav.plugins": "Plugins",
-
+  "nav.logout": "Logout",
   "app.brand": "SignFlow",
-
   "auth.welcome": "Welcome back",
   "auth.subtitle": "Enter your API token to access the console.",
   "auth.verifying": "Verifying token",
@@ -21,7 +20,6 @@
   "auth.tokenRequired": "Token is required",
   "auth.existingTokenInvalid": "Existing token invalid. Please sign in again.",
   "auth.invalidToken": "Invalid token",
-
   "dashboard.title": "Dashboard",
   "dashboard.viewSchedule": "View schedule",
   "dashboard.actionFailed": "Action failed",
@@ -47,7 +45,6 @@
   "dashboard.addSchedule": "Add schedule",
   "dashboard.triggerFailed": "Failed to trigger run",
   "dashboard.loadFailed": "Failed to load dashboard",
-
   "sites.title": "Sites",
   "sites.add": "Add site",
   "sites.actionFailed": "Action failed",
@@ -82,7 +79,6 @@
   "sites.adminTokenInvalid": "Admin token invalid",
   "sites.adminTokenNotConfigured": "Admin token not configured",
   "sites.deleteFailed": "Failed to delete site",
-
   "siteDetail.title": "Site details",
   "siteDetail.loading": "Loading site",
   "siteDetail.unavailable": "Site unavailable",
@@ -115,7 +111,6 @@
   "siteDetail.deleteFailed": "Failed to delete site",
   "siteDetail.loadFailed": "Failed to load site",
   "siteDetail.deleted": "Site deleted",
-
   "jobs.title": "Jobs",
   "jobs.statusTitle": "Jobs",
   "jobs.failed": "Failed to load jobs",
@@ -144,7 +139,6 @@
   "jobs.cronInvalid": "Cron invalid",
   "jobs.runFailed": "Run failed",
   "jobs.loadFailed": "Failed to load jobs",
-
   "logs.title": "Logs",
   "logs.pause": "Pause stream",
   "logs.resume": "Resume stream",
@@ -157,7 +151,6 @@
   "logs.emptyDesc": "Run a site to see its activity here.",
   "logs.level": "Level",
   "logs.errorTitle": "Error",
-
   "settings.title": "Settings",
   "settings.actionFailed": "Action failed",
   "settings.saved": "Settings saved",
@@ -195,7 +188,6 @@
   "settings.syncCookies": "Sync cookies",
   "settings.syncFailed": "Sync failed",
   "settings.syncResult": "{message}",
-
   "plugins.title": "Plugins",
   "plugins.reload": "Reload",
   "plugins.actionFailed": "Action failed",
@@ -239,17 +231,14 @@
   "plugins.runCodeRequired": "Run code is required",
   "plugins.adminTokenRequired": "Admin token required",
   "plugins.saveFailed": "Failed to save plugin",
-
   "language.zh": "中文",
   "language.en": "English",
   "language.toggleLabel": "Language",
-
   "common.loading": "Loading",
   "common.required": "Required",
   "common.none": "None",
   "common.requiredField": "{field} is required",
   "common.pluginConfig": "Plugin Configuration",
   "common.selectPlaceholder": "Select…",
-
   "errors.somethingWrong": "Something went wrong"
 }
