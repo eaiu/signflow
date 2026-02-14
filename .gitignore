@@ -5,3 +5,7 @@ __pycache__/
 venv/
 backend/data/
 dist
+
+data/
+frontend/node_modules/
+backend/app/services/__pycache__/
