@@ -16,6 +16,7 @@ export default function SiteDetail() {
   const [site, setSite] = useState(null)
   const [runs, setRuns] = useState([])
   const [plugins, setPlugins] = useState([])
+  const [ccStatus, setCcStatus] = useState(null)
   const [form, setForm] = useState({ name: '', url: '', enabled: true, cookie_domain: '', cookiecloud_uuid: '', plugin_key: '', plugin_config: {}, notes: '' })
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -31,14 +32,16 @@ export default function SiteDetail() {
       setError('')
       setActionError('')
       try {
-        const [siteData, runData, pluginData] = await Promise.all([
+        const [siteData, runData, pluginData, ccData] = await Promise.all([
           apiGet(`/sites/${id}`),
           apiGet(`/runs?site_id=${id}`),
-          apiGet('/plugins')
+          apiGet('/plugins'),
+          apiGet('/cookiecloud/status')
         ])
         setSite(siteData)
         setRuns(runData)
         setPlugins(pluginData || [])
+        setCcStatus(ccData)
         setForm({
           name: siteData.name,
           url: siteData.url,
@@ -72,7 +75,7 @@ export default function SiteDetail() {
       activePlugin.config_schema.forEach(field => {
         if (field.required) {
           const current = values.plugin_config?.[field.key]
-          const isEmpty = field.field_type === "boolean" ? current !== true : !current
+          const isEmpty = field.field_type === \"boolean\" ? current !== true : !current
           if (isEmpty) {
             next[`plugin_config.${field.key}`] = t('common.requiredField', { field: field.label || field.key })
           }
@@ -160,51 +163,82 @@ export default function SiteDetail() {
 
   if (!site) return null
 
+  const availableUuids = ccStatus?.uuids ? Object.keys(ccStatus.uuids) : []
+  const availableDomains = (form.cookiecloud_uuid && ccStatus?.uuids?.[form.cookiecloud_uuid]?.domains) || []
+
   return (
     <Layout title={site.name} actions={
-      <button onClick={triggerRun} className="rounded-full bg-ink px-4 py-2 text-sm text-white">{t('siteDetail.runNow')}</button>
+      <button onClick={triggerRun} className=\"rounded-full bg-ink px-4 py-2 text-sm text-white\">{t('siteDetail.runNow')}</button>
     }>
       {actionError && (
-        <div className="mb-4">
+        <div className=\"mb-4\">
           <ErrorState title={t('siteDetail.actionFailed')} description={actionError} />
         </div>
       )}
       {status && (
-        <div className="mb-4">
+        <div className=\"mb-4\">
           <StatusBanner title={t('siteDetail.title')} description={status} />
         </div>
       )}
-      <div className="grid gap-6 lg:grid-cols-[1.5fr,1fr]">
+      <div className=\"grid gap-6 lg:grid-cols-[1.5fr,1fr]\">
         <Card title={t('siteDetail.siteDetails')} subtitle={t('siteDetail.updateConfig')}>
-          <form className="space-y-4" onSubmit={saveSite}>
-            <div className="grid gap-3">
-              <div className="space-y-2">
-                <input className="w-full rounded-lg border border-line px-3 py-2" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+          <form className=\"space-y-4\" onSubmit={saveSite}>
+            <div className=\"grid gap-3\">
+              <div className=\"space-y-2\">
+                <input className=\"w-full rounded-lg border border-line px-3 py-2\" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 <FormError message={formErrors.name} />
               </div>
-              <div className="space-y-2">
-                <input className="w-full rounded-lg border border-line px-3 py-2" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
+              <div className=\"space-y-2\">
+                <input className=\"w-full rounded-lg border border-line px-3 py-2\" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} />
                 <FormError message={formErrors.url} />
               </div>
-              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookieDomain')} value={form.cookie_domain} onChange={e => setForm({ ...form, cookie_domain: e.target.value })} />
-              <input className="w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.cookiecloudUuid')} value={form.cookiecloud_uuid} onChange={e => setForm({ ...form, cookiecloud_uuid: e.target.value })} />
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('sites.pluginLabel')}</label>
+              
+              <div className=\"grid gap-3 md:grid-cols-2\">
+                <div className=\"space-y-2\">
+                  <label className=\"text-sm font-medium\">{t('sites.cookiecloudUuidLabel')}</label>
+                  <select
+                    className=\"w-full rounded-lg border border-line px-3 py-2\"
+                    value={form.cookiecloud_uuid}
+                    onChange={e => setForm({ ...form, cookiecloud_uuid: e.target.value })}
+                  >
+                    <option value=\"\">{t('common.none')}</option>
+                    {availableUuids.map(uuid => (
+                      <option key={uuid} value={uuid}>{uuid}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className=\"space-y-2\">
+                  <label className=\"text-sm font-medium\">{t('sites.cookieDomainLabel')}</label>
+                  <input
+                    className=\"w-full rounded-lg border border-line px-3 py-2\"
+                    placeholder={t('siteDetail.cookieDomain')}
+                    value={form.cookie_domain}
+                    onChange={e => setForm({ ...form, cookie_domain: e.target.value })}
+                    list=\"available-domains-detail\"
+                  />
+                  <datalist id=\"available-domains-detail\">
+                    {availableDomains.map(d => (
+                      <option key={d.domain} value={d.domain}>{d.domain} ({d.cookie_count})</option>
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              <div className=\"space-y-2\">
+                <label className=\"text-sm font-medium\">{t('sites.pluginLabel')}</label>
                 <select
-                  className="w-full rounded-lg border border-line px-3 py-2"
+                  className=\"w-full rounded-lg border border-line px-3 py-2\"
                   value={form.plugin_key}
                   onChange={e => setForm({ ...form, plugin_key: e.target.value, plugin_config: {} })}
-                >
-                  <option value="">{t('sites.pluginEmpty')}</option>
+                >\n                  <option value=\"\">{t('sites.pluginEmpty')}</option>
                   {plugins.map(plugin => (
                     <option key={plugin.key} value={plugin.key}>{plugin.name}</option>
                   ))}
                 </select>
               </div>
               {activePlugin?.config_schema && activePlugin.config_schema.length > 0 && (
-                <div className="space-y-3 rounded-lg border border-line p-3">
-                  <p className="text-sm font-medium">{t('siteDetail.pluginConfig')}</p>
-                  {activePlugin.config_schema.map(field => (
+                <div className=\"space-y-3 rounded-lg border border-line p-3\">
+                  <p className=\"text-sm font-medium\">{t('siteDetail.pluginConfig')}</p>\n                  {activePlugin.config_schema.map(field => (
                     <ConfigField
                       key={field.key}
                       field={field}
@@ -215,19 +249,19 @@ export default function SiteDetail() {
                   ))}
                 </div>
               )}
-              <textarea className="min-h-[120px] w-full rounded-lg border border-line px-3 py-2" placeholder={t('siteDetail.notes')} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
-              <label className="flex items-center gap-2 text-sm text-muted">
-                <input type="checkbox" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })} />
+              <textarea className=\"min-h-[120px] w-full rounded-lg border border-line px-3 py-2\" placeholder={t('siteDetail.notes')} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+              <label className=\"flex items-center gap-2 text-sm text-muted\">
+                <input type=\"checkbox\" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })} />
                 {t('siteDetail.enabled')}
               </label>
             </div>
-            <button className="rounded-full bg-ink px-4 py-2 text-sm text-white" disabled={saving}>{t('siteDetail.save')}</button>
+            <button className=\"rounded-full bg-ink px-4 py-2 text-sm text-white\" disabled={saving}>{t('siteDetail.save')}</button>
           </form>
         </Card>
 
-        <div className="space-y-6">
+        <div className=\"space-y-6\">
           <Card title={t('siteDetail.recentRuns')} subtitle={t('siteDetail.recentRunsSubtitle')}>
-            <div className="space-y-3">
+            <div className=\"space-y-3\">
               {runs.length === 0 ? (
                 <EmptyState
                   title={t('siteDetail.noRuns')}
@@ -235,9 +269,9 @@ export default function SiteDetail() {
                 />
               ) : (
                 runs.slice(0, 10).map(run => (
-                  <div key={run.id} className="rounded-lg border border-line p-3">
-                    <p className="text-sm font-medium">{t('dashboard.runLabel', { id: run.id, siteId: run.site_id })}</p>
-                    <p className="text-xs text-muted">{t('siteDetail.runStatus', { status: run.status })}</p>
+                  <div key={run.id} className=\"rounded-lg border border-line p-3\">
+                    <p className=\"text-sm font-medium\">{t('dashboard.runLabel', { id: run.id, siteId: run.site_id })}</p>
+                    <p className=\"text-xs text-muted\">{t('siteDetail.runStatus', { status: run.status })}</p>
                   </div>
                 ))
               )}
@@ -245,16 +279,15 @@ export default function SiteDetail() {
           </Card>
 
           <Card title={t('siteDetail.dangerZone')} subtitle={t('siteDetail.destructive')}>
-            <div className="space-y-3 text-sm">
-              <p className="text-muted">{t('siteDetail.destructive')}</p>
+            <div className=\"space-y-3 text-sm\">\n              <p className=\"text-muted\">{t('siteDetail.destructive')}</p>
               <input
-                className="w-full rounded-lg border border-line px-3 py-2"
-                type="password"
+                className=\"w-full rounded-lg border border-line px-3 py-2\"
+                type=\"password\"
                 placeholder={t('siteDetail.adminTokenPlaceholder')}
                 value={adminToken}
                 onChange={e => setAdminToken(e.target.value)}
               />
-              <button className="w-full rounded-full bg-rose-600 px-4 py-2 text-sm text-white" onClick={deleteSite} type="button">{t('siteDetail.delete')}</button>
+              <button className=\"w-full rounded-full bg-rose-600 px-4 py-2 text-sm text-white\" onClick={deleteSite} type=\"button\">{t('siteDetail.delete')}</button>
             </div>
           </Card>
         </div>

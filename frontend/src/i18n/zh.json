@@ -244,5 +244,14 @@
   "common.requiredField": "{field} 必填",
   "common.pluginConfig": "插件配置",
   "common.selectPlaceholder": "请选择…",
-  "errors.somethingWrong": "出错了"
+  "errors.somethingWrong": "出错了",
+  "sites.cookiecloudUuidLabel": "CookieCloud 账号 (UUID)",
+  "sites.cookieDomainLabel": "Cookie 域名",
+  "sites.cookieDomainPlaceholder": "选择或输入域名",
+  "settings.cookiecloudStatus": "CookieCloud 状态",
+  "settings.lastSync": "上次同步",
+  "settings.lastChecked": "上次检查",
+  "settings.domains": "域名",
+  "settings.cookies": "Cookie 数量",
+  "settings.noData": "暂无同步数据"
 }

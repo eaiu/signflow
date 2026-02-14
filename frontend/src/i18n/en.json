@@ -244,5 +244,14 @@
   "common.requiredField": "{field} is required",
   "common.pluginConfig": "Plugin Configuration",
   "common.selectPlaceholder": "Select…",
-  "errors.somethingWrong": "Something went wrong"
+  "errors.somethingWrong": "Something went wrong",
+  "sites.cookiecloudUuidLabel": "CookieCloud Account (UUID)",
+  "sites.cookieDomainLabel": "Cookie Domain",
+  "sites.cookieDomainPlaceholder": "Select or enter domain",
+  "settings.cookiecloudStatus": "CookieCloud Status",
+  "settings.lastSync": "Last Sync",
+  "settings.lastChecked": "Last Checked",
+  "settings.domains": "Domains",
+  "settings.cookies": "Cookies",
+  "settings.noData": "No sync data available"
 }
