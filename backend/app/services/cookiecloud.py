@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from typing import Dict, Any, List, Optional
+
 import requests
 
 from app.core.config import get_settings
@@ -17,7 +18,10 @@ class CookieCloudClient:
         self.local = load_app_settings()
 
     def sync(self, uuid: Optional[str] = None) -> Dict[str, Any]:
-        """Fetch CookieCloud payload(s), decrypt, and return cookie/localStorage data."""
+        """Fetch CookieCloud payload(s), decrypt, and return cookie/localStorage data.
+
+        NOTE: This method does not persist cache. Use CookieCloudSyncService for cache+diff.
+        """
         if not (self.local.get("cookiecloud_url") or self.settings.cookiecloud_url):
             return {"ok": False, "message": "CookieCloud not configured"}
 
@@ -49,25 +53,22 @@ class CookieCloudClient:
             except json.JSONDecodeError:
                 results.append({"uuid": payload["uuid"], "ok": False, "message": "invalid json"})
                 continue
-            results.append({
-                "uuid": payload["uuid"],
-                "ok": True,
-                "cookie_data": parsed.get("cookie_data") or {},
-                "local_storage_data": parsed.get("local_storage_data") or {},
-            })
+            results.append(
+                {
+                    "uuid": payload["uuid"],
+                    "ok": True,
+                    "cookie_data": parsed.get("cookie_data") or {},
+                    "local_storage_data": parsed.get("local_storage_data") or {},
+                }
+            )
 
         summary = self._summarize(results)
-        top_3 = ", ".join([f"{d['domain']} ({d['count']})" for d in summary['top_domains'][:3]])
+        top_3 = ", ".join([f"{d['domain']} ({d['count']})" for d in summary["top_domains"][:3]])
         message = f"Synced {summary['total_cookies']} cookies from {summary['total_domains']} domains. Top: {top_3}"
-        if summary['total_domains'] > 3:
+        if summary["total_domains"] > 3:
             message += " ..."
 
-        return {
-            "ok": True, 
-            "message": message,
-            "summary": summary,
-            "results": results
-        }
+        return {"ok": True, "message": message, "summary": summary, "results": results}
 
     def _summarize(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
         total_cookies = 0

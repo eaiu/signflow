@@ -32,6 +32,9 @@ class PluginContext:
     plugin_config: Optional[Dict[str, Any]]
     started_at: datetime
     notes: Optional[str]
+    # Optional CookieCloud injected data (kept optional to avoid breaking existing plugins)
+    cookiecloud_cookies: Optional[List[Dict[str, Any]]] = None
+    cookiecloud_local_storage: Optional[Dict[str, Any]] = None
 
 
 @dataclass

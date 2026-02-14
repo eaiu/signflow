@@ -54,9 +54,11 @@ class CookieCloudPlugin(SitePlugin):
         if context.plugin_config:
             profile_override = context.plugin_config.get("uuid")
         uuid = profile_override or context.cookiecloud_uuid
-        if not profile:
-            return PluginResult.failure("No CookieCloud profile configured.")
+        if not uuid:
+            return PluginResult.failure("No CookieCloud UUID configured.")
+        # This is just a sample plugin. Actual CookieCloud sync happens in executor before run.
         return PluginResult.success(
-            message=f"CookieCloud sync scheduled for {profile}.",
-            profile=profile,
+            message=f"CookieCloud UUID detected: {uuid}.",
+            uuid=uuid,
+            cookie_count=len(context.cookiecloud_cookies or []),
         )

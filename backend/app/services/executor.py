@@ -12,6 +12,8 @@ from app.plugins.loader import load_configured_plugins
 from app.plugins.registry import get_registry
 from app.services.hooks import log_event
 from app.services.config_store import deserialize_config
+from app.services.cookiecloud_sync import CookieCloudSyncService
+from app.services.cookiecloud_injector import inject_cookiecloud_context
 
 
 QUEUED_STATUS = "queued"
@@ -117,6 +119,39 @@ class RunExecutor:
             started_at=run.started_at or datetime.utcnow(),
             notes=site.notes,
         )
+
+        # CookieCloud: sync before each run when uuid configured; inject selected domain cookies into context.
+        if site.cookiecloud_uuid:
+            try:
+                sync_service = CookieCloudSyncService()
+                sync_result = sync_service.sync(site.cookiecloud_uuid)
+                log_event(
+                    self.session,
+                    f"CookieCloud checked for {site.cookiecloud_uuid} (updated={sync_result.get('cache_updated')})",
+                    level="debug",
+                    run_id=run.id,
+                    event="cookiecloud.synced",
+                    payload={
+                        "uuid": site.cookiecloud_uuid,
+                        "cache_updated": bool(sync_result.get("cache_updated")),
+                    },
+                )
+            except Exception as exc:
+                log_event(
+                    self.session,
+                    f"CookieCloud sync failed: {exc}",
+                    level="warning",
+                    run_id=run.id,
+                    event="cookiecloud.sync_failed",
+                    payload={"uuid": site.cookiecloud_uuid, "error": str(exc)},
+                )
+
+            # Inject cookies from local cache (if cookie_domain present)
+            inject_cookiecloud_context(
+                context,
+                uuid=site.cookiecloud_uuid,
+                cookie_domain=site.cookie_domain,
+            )
         log_event(
             self.session,
             f"Plugin {plugin.key} started",
